@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('Windows'))">net9-windows</TargetFrameworks>
+        <TargetFrameworks Condition="!$([MSBuild]::IsOSPlatform('Windows'))">net9</TargetFrameworks>
+        <RootNamespace>NAPS2.Sdk.ScannerTests</RootNamespace>
+    </PropertyGroup>
+
+    <Import Project="..\NAPS2.Setup\targets\CommonTargets.targets" />
+    <Import Project="..\NAPS2.Setup\targets\NativeLibs.targets" />
+    <Import Project="..\NAPS2.Setup\targets\SdkUsers.targets" />
+
+    <ItemGroup>
+        <ProjectReference Include="..\NAPS2.Sdk.Tests\NAPS2.Sdk.Tests.csproj" />
+
+        <PackageReference Include="NAPS2.Sane.Binaries" Version="1.1.0" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
+        <PackageReference Include="NSubstitute" Version="5.0.0" />
+        <PackageReference Include="xunit" Version="2.9.0" />
+        <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" PrivateAssets="all" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+
+</Project>

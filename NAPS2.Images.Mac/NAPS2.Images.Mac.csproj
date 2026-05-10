@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>net6;net8;net8-macos</TargetFrameworks>
+        <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <CheckEolTargetFramework>false</CheckEolTargetFramework>
+        <RootNamespace>NAPS2.Images.Mac</RootNamespace>
+
+        <Title>NAPS2.Images.Mac</Title>
+        <Product>NAPS2.Images.Mac</Product>
+        <Description>Images based on AppKit.NSImage for NAPS2.Sdk.</Description>
+        <PackageTags>naps2</PackageTags>
+    </PropertyGroup>
+
+    <Import Project="..\NAPS2.Setup\targets\SdkPackageTargets.targets" />
+
+    <ItemGroup>
+        <ProjectReference Include="..\NAPS2.Images\NAPS2.Images.csproj" />
+        <PackageReference Include="Eto.Platform.Mac64" Version="2.8.3" Condition="'$(TargetFramework)' != 'net8-macos'" />
+    </ItemGroup>
+
+    <PropertyGroup Condition="'$(TargetFramework)' != 'net8-macos'">
+        <DefineConstants>MONOMAC</DefineConstants>
+    </PropertyGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' != 'net8-macos'">
+        <Using Include="MonoMac.AppKit" />
+        <Using Include="MonoMac.CoreGraphics" />
+        <Using Include="MonoMac.Foundation" />
+        <Using Include="MonoMac.ImageIO" />
+        <Using Include="MonoMac.MobileCoreServices" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'net8-macos'">
+        <Using Include="AppKit" />
+        <Using Include="CoreGraphics" />
+        <Using Include="Foundation" />
+        <Using Include="ImageIO" />
+        <Using Include="MobileCoreServices" />
+        <Using Include="System.Runtime.InteropServices" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+            <_Parameter1>NAPS2.Sdk.Tests</_Parameter1>
+        </AssemblyAttribute>
+    </ItemGroup>
+
+    <Import Project="..\NAPS2.Setup\targets\CommonTargets.targets" />
+    <Import Project="..\NAPS2.Setup\targets\ImageUsers.targets" />
+
+</Project>

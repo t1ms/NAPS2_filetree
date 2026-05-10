@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>net6;net8;net462</TargetFrameworks>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <LangVersion>12</LangVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\NAPS2.Escl\NAPS2.Escl.csproj" />
+
+        <PackageReference Include="LibUsbDotNet" Version="3.0.102-alpha" />
+         <PackageReference Include="Polyfill" Version="4.9.0" PrivateAssets="all" />
+    </ItemGroup>
+
+</Project>

@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup>
+    <!-- Suppress the "net8-macos is out of support" error from .NET 10 SDK -->
+    <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
+    <NoWarn>$(NoWarn);NETSDK1202</NoWarn>
+  </PropertyGroup>
+</Project>

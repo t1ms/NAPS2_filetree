@@ -1,0 +1,17 @@
+Desktop.ini
+.DS_Store
+packages/
+*.user
+*.suo
+.vs/
+.idea/
+.nuget/
+
+# .NET Build artifacts
+bin/
+obj/
+TestResults/
+
+# Mac OS
+*.app/
+*.dmg
