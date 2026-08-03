@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using NAPS2.ImportExport;
 using NAPS2.Ocr;
@@ -287,6 +287,7 @@ internal class ScanPerformer : IScanPerformer
             Dpi = scanProfile.Resolution.Dpi,
             Quality = scanProfile.Quality,
             AutoDeskew = scanProfile.AutoDeskew,
+            AutoRotateOrientation = scanProfile.AutoRotateOrientation,
             RotateDegrees = scanProfile.RotateDegrees,
             BitDepth = scanProfile.BitDepth.ToBitDepth(),
             DialogParent = dialogParent,

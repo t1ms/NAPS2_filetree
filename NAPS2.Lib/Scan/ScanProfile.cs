@@ -97,6 +97,8 @@ public class ScanProfile
 
     public bool AutoDeskew { get; set; }
 
+    public bool AutoRotateOrientation { get; set; }
+
     public double RotateDegrees { get; set; }
 
     public bool BrightnessContrastAfterScan { get; set; }

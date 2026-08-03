@@ -1,6 +1,8 @@
 using NAPS2.EtoForms.Notifications;
+using NAPS2.EtoForms.Ui;
 using NAPS2.EtoForms.Widgets;
 using NAPS2.ImportExport;
+using NAPS2.Ocr;
 
 namespace NAPS2.EtoForms.Desktop;
 
@@ -14,11 +16,16 @@ public class ImageListActions
     private readonly IExportController _exportController;
     private readonly INotify _notify;
     private readonly EditWithController _editWithController;
+    private readonly TesseractLanguageManager _tesseractLanguageManager;
+    private readonly IFormFactory _formFactory;
 
     public ImageListActions(UiImageList imageList, IOperationFactory operationFactory,
         OperationProgress operationProgress, Naps2Config config, ThumbnailController thumbnailController,
-        IExportController exportController, INotify notify, EditWithController editWithController)
+        IExportController exportController, INotify notify, EditWithController editWithController,
+        TesseractLanguageManager tesseractLanguageManager, IFormFactory formFactory)
     {
+        _tesseractLanguageManager = tesseractLanguageManager;
+        _formFactory = formFactory;
         _imageList = imageList;
         _operationFactory = operationFactory;
         _operationProgress = operationProgress;
@@ -36,7 +43,7 @@ public class ImageListActions
     public ImageListActions WithSelection(Func<ListSelection<UiImage>> selectionFunc)
     {
         return new ImageListActions(_imageList, _operationFactory, _operationProgress, _config, _thumbnailController,
-            _exportController, _notify, _editWithController)
+            _exportController, _notify, _editWithController, _tesseractLanguageManager, _formFactory)
         {
             SelectionFunc = selectionFunc
         };
@@ -87,6 +94,34 @@ public class ImageListActions
 
         var op = _operationFactory.Create<DeskewOperation>();
         if (op.Start(_imageList, images.ToList(), new DeskewParams { ThumbnailSize = _thumbnailController.RenderSize }))
+        {
+            _operationProgress.ShowProgress(op);
+        }
+    }
+
+    public void AutoRotate()
+    {
+        var images = Selection ?? _imageList.Selection;
+        if (!images.Any())
+        {
+            return;
+        }
+
+        if (!_tesseractLanguageManager.IsOsdInstalled)
+        {
+            // Orientation detection needs the osd.traineddata component; offer to download it now
+            var progressForm = _formFactory.Create<DownloadProgressForm>();
+            progressForm.Controller.QueueFile(_tesseractLanguageManager.OsdComponent);
+            progressForm.ShowModal();
+            if (!_tesseractLanguageManager.IsOsdInstalled)
+            {
+                return;
+            }
+        }
+
+        var op = _operationFactory.Create<AutoRotateOperation>();
+        if (op.Start(_imageList, images.ToList(),
+                new AutoRotateParams { ThumbnailSize = _thumbnailController.RenderSize }))
         {
             _operationProgress.ShowProgress(op);
         }

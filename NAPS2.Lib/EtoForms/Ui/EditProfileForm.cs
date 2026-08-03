@@ -384,6 +384,7 @@ public class EditProfileForm : EtoDialogBase
             Quality = ScanProfile.Quality,
             BrightnessContrastAfterScan = ScanProfile.BrightnessContrastAfterScan,
             AutoDeskew = ScanProfile.AutoDeskew,
+            AutoRotateOrientation = ScanProfile.AutoRotateOrientation,
             WiaOffsetWidth = ScanProfile.WiaOffsetWidth,
             WiaRetryOnFailure = ScanProfile.WiaRetryOnFailure,
             WiaDelayBetweenScans = ScanProfile.WiaDelayBetweenScans,

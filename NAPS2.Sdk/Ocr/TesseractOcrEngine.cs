@@ -178,6 +178,112 @@ public class TesseractOcrEngine : IOcrEngine
         }
     }
 
+    /// <summary>
+    /// Runs Tesseract orientation & script detection (OSD, "--psm 0") on the given image and returns the rotation
+    /// needed to make the text upright. Requires osd.traineddata to be present in the language data folder.
+    /// Returns null if detection fails for any reason (missing data, no text, timeout).
+    /// </summary>
+    public async Task<OsdResult?> DetectOrientation(ScanningContext scanningContext, string imagePath,
+        CancellationToken cancelToken = default)
+    {
+        var logger = scanningContext.Logger;
+        try
+        {
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = _tesseractPath,
+                Arguments = $"\"{imagePath}\" stdout --psm 0",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+            if (_languageDataBasePath != null)
+            {
+                string languageDataPath = _languageDataBasePath;
+                if (_withModes)
+                {
+                    // OSD data is the same for both modes; we install it under both subfolders
+                    languageDataPath = Path.Combine(languageDataPath, "fast");
+                }
+                startInfo.EnvironmentVariables["TESSDATA_PREFIX"] = languageDataPath;
+            }
+            var process = Process.Start(startInfo);
+            if (process == null)
+            {
+                logger.LogError("Couldn't start OSD process.");
+                return null;
+            }
+            process.PriorityClass = ProcessPriorityClass.BelowNormal;
+
+            var outputTask = process.StandardOutput.ReadToEndAsync();
+            var errorTask = process.StandardError.ReadToEndAsync();
+
+            var waitTasks = new List<Task>
+            {
+                process.WaitForExitAsync(),
+                cancelToken.WaitHandle.WaitOneAsync(),
+                Task.Delay(OSD_TIMEOUT_MS)
+            };
+            await Task.WhenAny(waitTasks);
+
+            if (!process.HasExited)
+            {
+                try
+                {
+                    process.Kill();
+                    Thread.Sleep(200);
+                }
+                catch (Exception e)
+                {
+                    logger.LogError(e, "Error killing OSD process");
+                }
+                return null;
+            }
+
+            var output = await outputTask + "\n" + await errorTask;
+            return ParseOsdOutput(output);
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "Error running orientation detection");
+            return null;
+        }
+    }
+
+    // Keep this fairly short as detection runs inline during scan post-processing; a hung detection
+    // should degrade to "no rotation" rather than stalling the scan pipeline.
+    private const int OSD_TIMEOUT_MS = 15_000;
+
+    internal static OsdResult? ParseOsdOutput(string output)
+    {
+        int? rotate = null;
+        double? confidence = null;
+        foreach (var line in output.Split('\n'))
+        {
+            var parts = line.Split(':');
+            if (parts.Length != 2) continue;
+            var key = parts[0].Trim();
+            var value = parts[1].Trim();
+            if (key == "Rotate" && int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture,
+                    out int rotateVal))
+            {
+                rotate = rotateVal;
+            }
+            else if (key == "Orientation confidence" && double.TryParse(value, NumberStyles.Float,
+                         CultureInfo.InvariantCulture, out double confVal))
+            {
+                confidence = confVal;
+            }
+        }
+        // Only right-angle rotations are valid OSD results; anything else means garbage output
+        if (rotate is not (0 or 90 or 180 or 270) || confidence == null)
+        {
+            return null;
+        }
+        return new OsdResult(rotate.Value, confidence.Value);
+    }
+
     public event EventHandler<OcrErrorEventArgs>? OcrError;
 
     public event EventHandler? OcrTimeout;

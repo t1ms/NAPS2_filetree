@@ -1,4 +1,4 @@
-﻿using NAPS2.Ocr;
+using NAPS2.Ocr;
 using NAPS2.Serialization;
 
 namespace NAPS2.Scan;
@@ -130,6 +130,13 @@ public class ScanOptions
     /// Whether scanned images should go through automatic deskewing to straighten pages that are at a slight angle.
     /// </summary>
     public bool AutoDeskew { get; set; }
+
+    /// <summary>
+    /// Whether to automatically rotate scanned pages (by 90/180/270 degrees) based on detected text orientation.
+    /// Requires the scanning context's OcrEngine to be a TesseractOcrEngine with osd.traineddata available.
+    /// Detection failures are ignored and never block the scan.
+    /// </summary>
+    public bool AutoRotateOrientation { get; set; }
 
     /// <summary>
     /// A fixed number of degrees to rotate each scanned page clockwise. If AutoDeskew is true, the fixed rotation

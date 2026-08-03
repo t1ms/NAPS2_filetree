@@ -411,6 +411,7 @@ public abstract class DesktopForm : EtoFormBase
             .Append(Commands.RotateRight)
             .Append(Commands.Flip)
             .Append(Commands.Deskew)
+            .Append(Commands.AutoRotate)
             .Append(Commands.CustomRotate);
 
     protected MenuProvider GetLanguageMenuProvider()

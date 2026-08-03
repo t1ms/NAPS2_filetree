@@ -3,6 +3,7 @@ using Eto.Forms;
 using NAPS2.EtoForms.Layout;
 using NAPS2.EtoForms.Widgets;
 using NAPS2.Lang;
+using NAPS2.Ocr;
 using NAPS2.Scan;
 
 namespace NAPS2.EtoForms.Ui;
@@ -15,6 +16,7 @@ public class AdvancedProfileForm : EtoDialogBase
     private readonly SliderWithTextBox _whiteThreshold = new(new SliderWithTextBox.IntConstraints(0, 100, 10));
     private readonly SliderWithTextBox _coverageThreshold = new(new SliderWithTextBox.IntConstraints(0, 100, 10));
     private readonly CheckBox _deskew = new() { Text = UiStrings.DeskewScannedPages };
+    private readonly CheckBox _autoRotate = new() { Text = "Auto rotate (detect text orientation)" };
     private readonly CheckBox _brightContAfterScan = new() { Text = UiStrings.BrightnessContrastAfterScan };
     private readonly CheckBox _offsetWidth = new() { Text = UiStrings.OffsetWidth };
     private readonly CheckBox _stretchToPageSize = new() { Text = UiStrings.StretchToPageSize };
@@ -33,12 +35,18 @@ public class AdvancedProfileForm : EtoDialogBase
     private readonly CheckBox _twainProgress = new() { Text = UiStrings.ShowNativeTwainProgress };
     private readonly Button _restoreDefaults = new() { Text = UiStrings.RestoreDefaults };
 
-    public AdvancedProfileForm(Naps2Config config, IIconProvider iconProvider) : base(config)
+    private readonly TesseractLanguageManager _tesseractLanguageManager;
+    private bool _updatingValues;
+
+    public AdvancedProfileForm(Naps2Config config, IIconProvider iconProvider,
+        TesseractLanguageManager tesseractLanguageManager) : base(config)
     {
         Title = UiStrings.AdvancedProfileFormTitle;
         IconName = "blueprints_small";
+        _tesseractLanguageManager = tesseractLanguageManager;
 
         _restoreDefaults.Click += RestoreDefaults_Click;
+        _autoRotate.CheckedChanged += AutoRotate_CheckedChanged;
         _maximumQuality.CheckedChanged += MaximumQuality_CheckedChanged;
         _excludeBlank.CheckedChanged += ExcludeBlank_CheckedChanged;
         _wiaVersion.Format = value => value switch
@@ -84,7 +92,10 @@ public class AdvancedProfileForm : EtoDialogBase
             ),
             L.GroupBox(
                 UiStrings.PostProcessing,
-                _deskew
+                L.Column(
+                    _deskew,
+                    _autoRotate
+                )
             ),
             L.GroupBox(
                 UiStrings.Compatibility,
@@ -113,12 +124,30 @@ public class AdvancedProfileForm : EtoDialogBase
         );
     }
 
+    private void AutoRotate_CheckedChanged(object? sender, EventArgs e)
+    {
+        if (_updatingValues || !_autoRotate.IsChecked() || _tesseractLanguageManager.IsOsdInstalled)
+        {
+            return;
+        }
+        // Orientation detection needs the osd.traineddata component; offer to download it now
+        var progressForm = FormFactory.Create<DownloadProgressForm>();
+        progressForm.Controller.QueueFile(_tesseractLanguageManager.OsdComponent);
+        progressForm.ShowModal();
+        if (!_tesseractLanguageManager.IsOsdInstalled)
+        {
+            _autoRotate.Checked = false;
+        }
+    }
+
     private void UpdateValues(ScanProfile scanProfile)
     {
+        _updatingValues = true;
         _maximumQuality.Checked = scanProfile.MaxQuality;
         _quality.IntValue = scanProfile.Quality;
         _brightContAfterScan.Checked = scanProfile.BrightnessContrastAfterScan;
         _deskew.Checked = scanProfile.AutoDeskew;
+        _autoRotate.Checked = scanProfile.AutoRotateOrientation;
         _offsetWidth.Checked = scanProfile.WiaOffsetWidth;
         _wiaVersion.SelectedItem = scanProfile.WiaVersion;
         _stretchToPageSize.Checked = scanProfile.ForcePageSize;
@@ -129,6 +158,7 @@ public class AdvancedProfileForm : EtoDialogBase
         _excludeBlank.Checked = scanProfile.ExcludeBlankPages;
         _whiteThreshold.IntValue = scanProfile.BlankPageWhiteThreshold;
         _coverageThreshold.IntValue = scanProfile.BlankPageCoverageThreshold;
+        _updatingValues = false;
     }
 
     private void UpdateEnabled()
@@ -146,6 +176,7 @@ public class AdvancedProfileForm : EtoDialogBase
         ScanProfile.MaxQuality = _maximumQuality.IsChecked();
         ScanProfile.BrightnessContrastAfterScan = _brightContAfterScan.IsChecked();
         ScanProfile.AutoDeskew = _deskew.IsChecked();
+        ScanProfile.AutoRotateOrientation = _autoRotate.IsChecked();
         ScanProfile.WiaOffsetWidth = _offsetWidth.IsChecked();
         ScanProfile.WiaVersion = _wiaVersion.SelectedItem;
         ScanProfile.ForcePageSize = _stretchToPageSize.IsChecked();

@@ -1,4 +1,4 @@
-﻿using NAPS2.Dependencies;
+using NAPS2.Dependencies;
 
 namespace NAPS2.Ocr;
 
@@ -19,6 +19,10 @@ public class TesseractLanguageManager
             new MultiFileExternalComponent($"ocr-{x.Code}", TessdataBasePath,
                 new[] { $"best/{x.Code}.traineddata", $"fast/{x.Code}.traineddata" },
                 new DownloadInfo(x.Filename, Mirrors, x.Size, x.Sha256, DownloadFormat.Zip)));
+        OsdComponent = new MultiFileExternalComponent("ocr-osd", TessdataBasePath,
+            new[] { "best/osd.traineddata", "fast/osd.traineddata" },
+            new DownloadInfo("osd.traineddata.zip", Mirrors, 8.22,
+                "e37afe697de9de3ae40285773dc3f5e7983a2e263026871ecc6d072678e8b36a", DownloadFormat.Zip));
     }
 
     private string GetTessdataBasePath(string basePath)
@@ -47,4 +51,11 @@ public class TesseractLanguageManager
     public Language GetLanguage(string code) => _languageData.LanguageMap["ocr-" + code];
 
     public IEnumerable<IExternalComponent> LanguageComponents { get; }
+
+    /// <summary>
+    /// The osd.traineddata component used for orientation detection (auto-rotate).
+    /// </summary>
+    public IExternalComponent OsdComponent { get; }
+
+    public virtual bool IsOsdInstalled => OsdComponent.IsInstalled;
 }
