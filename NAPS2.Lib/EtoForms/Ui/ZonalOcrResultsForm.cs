@@ -13,6 +13,7 @@ public class ZonalOcrResultsForm : EtoDialogBase
 {
     private readonly ZonalOcrResultsStore _store;
     private readonly GridView _grid = new();
+    private readonly Label _notice = new() { Text = "", Visible = false };
 
     public ZonalOcrResultsForm(Naps2Config config, ZonalOcrResultsStore store)
         : base(config)
@@ -51,6 +52,7 @@ public class ZonalOcrResultsForm : EtoDialogBase
 
         LayoutController.Content = L.Column(
             _grid.Scale(),
+            _notice,
             L.Row(
                 C.Button("Export CSV...", ExportCsv),
                 C.Button("Clear", () =>
@@ -84,14 +86,21 @@ public class ZonalOcrResultsForm : EtoDialogBase
     private void RefreshGrid()
     {
         var entries = new List<Entry>();
+        string? notice = null;
         foreach (var result in _store.GetAll())
         {
             foreach (var field in result.Fields)
             {
                 entries.Add(new Entry(result.PageNumber.ToString(), field.Name, field.Value));
             }
+            if (!string.IsNullOrEmpty(result.Notice))
+            {
+                notice = result.Notice;
+            }
         }
         _grid.DataStore = entries;
+        _notice.Text = notice ?? "";
+        _notice.Visible = notice != null;
     }
 
     private void ExportCsv()

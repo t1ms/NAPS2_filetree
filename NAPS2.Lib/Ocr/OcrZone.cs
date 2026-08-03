@@ -16,4 +16,10 @@ public class OcrZone
     public double Width { get; set; }
 
     public double Height { get; set; }
+
+    /// <summary>
+    /// Optional per-zone prompt template for LLM field cleanup. "{FieldType}" is replaced with
+    /// the zone name. If null/empty, the default prompt template is used.
+    /// </summary>
+    public string? LlmPrompt { get; set; }
 }

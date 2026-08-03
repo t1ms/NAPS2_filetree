@@ -58,7 +58,8 @@ public class DesktopControllerTests : ContextualTests
         _exportHelper = Substitute.For<IExportController>();
         _dialogHelper = Substitute.For<DialogHelper>();
         _desktopImagesController = new DesktopImagesController(_imageList,
-            new ZonalOcrService(ScanningContext, _config, new ZonalOcrResultsStore()),
+            new ZonalOcrService(ScanningContext, _config, new ZonalOcrResultsStore(),
+                new LlmFieldNormalizer(_config)),
             new ZonalOcrResultsStore());
         _desktopScanController = Substitute.For<IDesktopScanController>();
         _desktopFormProvider = new DesktopFormProvider();

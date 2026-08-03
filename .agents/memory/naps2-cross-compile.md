@@ -11,5 +11,8 @@ description: Gotchas when building the portable Windows NAPS2 ZIP on Linux/Repli
 ## Background publish caveat (Aug 2026)
 `setsid nohup dotnet publish ... & disown` died silently twice (empty log, no process). Reliable approach: run `dotnet restore` first (plain retry if it hangs at "Determining projects to restore..."), then run each publish in the foreground with `timeout 290` — win-x64 WinForms publish completes in ~3-4 min after restore.
 
+## LLamaSharp publish note
+LLamaSharp.Backend.Cpu breaks `dotnet publish` with NETSDK1152 (avx/avx2/avx512/noavx llama.dll variants collide when flattened). **How to apply:** publish with `-p:ErrorOnDuplicatePublishOutputFiles=false`, delete the flattened llama/ggml/llava dlls, and copy the package's full `runtimes/win-x64/native` tree into the app dir so the loader picks the best CPU variant at runtime.
+
 ## Zonal OCR test note
 `Path.GetInvalidFileNameChars()` differs by platform (Linux allows ':'); filename sanitization uses a fixed Windows char set so tests and behavior are consistent cross-platform. GTK-dependent tests (AutoSaverTests etc.) fail on this runner with libgobject DllNotFoundException — environmental, not code.

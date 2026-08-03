@@ -39,6 +39,8 @@
     <PackageReference Include="Eto.Forms" Version="2.8.3" />
     <PackageReference Include="Grpc.Tools" Version="2.67.0" PrivateAssets="all" />
     <PackageReference Include="IsExternalInit" Version="1.0.3" PrivateAssets="all" />
+    <PackageReference Include="LLamaSharp" Version="0.18.0" />
+    <PackageReference Include="LLamaSharp.Backend.Cpu" Version="0.18.0" />
     <PackageReference Include="MimeKitLite" Version="4.7.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="NLog" Version="5.3.2" />

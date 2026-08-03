@@ -40,7 +40,8 @@ public class AutoSaverTests : ContextualTests
             _config,
             ImageContext,
             new UiImageList(),
-            new ZonalOcrService(ScanningContext, _config, new ZonalOcrResultsStore())
+            new ZonalOcrService(ScanningContext, _config, new ZonalOcrResultsStore(),
+                new LlmFieldNormalizer(_config))
         );
     }
 

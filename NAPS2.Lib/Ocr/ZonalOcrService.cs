@@ -12,16 +12,19 @@ public class ZonalOcrService
     private readonly ScanningContext _scanningContext;
     private readonly Naps2Config _config;
     private readonly ZonalOcrResultsStore _store;
+    private readonly LlmFieldNormalizer _llmNormalizer;
 
     // Bound the number of concurrent page extractions so batch scans don't spawn
     // pages x zones parallel Tesseract processes
     private readonly SemaphoreSlim _extractionSemaphore = new(2, 2);
 
-    public ZonalOcrService(ScanningContext scanningContext, Naps2Config config, ZonalOcrResultsStore store)
+    public ZonalOcrService(ScanningContext scanningContext, Naps2Config config, ZonalOcrResultsStore store,
+        LlmFieldNormalizer llmNormalizer)
     {
         _scanningContext = scanningContext;
         _config = config;
         _store = store;
+        _llmNormalizer = llmNormalizer;
     }
 
     public OcrZoneTemplate? GetActiveTemplate()
@@ -139,12 +142,45 @@ public class ZonalOcrService
             }
             fields.Add(new ZonalOcrField(zone.Name, value));
         }
+        var notice = await MaybeNormalizeWithLlm(template, fields, cancelToken);
         return new ZonalOcrResult
         {
             PageNumber = _store.NextPageNumber(),
             TemplateName = template.Name,
-            Fields = fields
+            Fields = fields,
+            Notice = notice
         };
+    }
+
+    /// <summary>
+    /// If LLM cleanup is enabled, normalizes each field value in place. Returns a user-visible
+    /// notice if cleanup was enabled but unavailable (raw OCR text is kept in that case - LLM
+    /// issues never block the scan pipeline).
+    /// </summary>
+    private async Task<string?> MaybeNormalizeWithLlm(OcrZoneTemplate template, List<ZonalOcrField> fields,
+        CancellationToken cancelToken)
+    {
+        if (!_llmNormalizer.IsEnabled)
+        {
+            return null;
+        }
+        for (int i = 0; i < fields.Count && i < template.Zones.Count; i++)
+        {
+            var field = fields[i];
+            if (string.IsNullOrWhiteSpace(field.Value))
+            {
+                continue;
+            }
+            var cleaned = await _llmNormalizer.NormalizeAsync(
+                field.Name, template.Zones[i].LlmPrompt, field.Value, cancelToken);
+            if (cleaned == null)
+            {
+                // Model unavailable or failed; keep raw values and stop trying for this page
+                return _llmNormalizer.UnavailableReason ?? "AI cleanup unavailable; showing raw OCR text.";
+            }
+            fields[i] = field with { Value = cleaned };
+        }
+        return null;
     }
 
     private OcrParams GetOcrParams()

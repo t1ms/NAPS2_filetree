@@ -23,6 +23,11 @@ public class OcrZonesForm : ImageFormBase
     private readonly Button _deleteZone;
     private readonly CheckBox _useForScanning = new()
         { Text = "Use this template for scans (extract fields from each scanned page)", Checked = true };
+    private readonly TextBox _zonePrompt = new();
+    private readonly CheckBox _llmEnabled = new()
+        { Text = "Clean up field values with a local AI model (CPU-only, .gguf)" };
+    private readonly Label _llmModelLabel = new() { Text = "" };
+    private readonly Button _llmModelPicker;
 
     private readonly List<EditableZone> _zones = new();
     private int _selectedZoneIndex = -1;
@@ -42,6 +47,9 @@ public class OcrZonesForm : ImageFormBase
         IconName = "text_small";
 
         _deleteZone = C.Button("Delete Zone", DeleteSelectedZone);
+        _llmModelPicker = C.Button("Choose Model...", PickLlmModel);
+        _llmEnabled.Checked = config.Get(c => c.EnableLlmFieldCleanup);
+        UpdateLlmModelLabel();
 
         Overlay.MouseDown += Overlay_MouseDown;
         Overlay.MouseMove += Overlay_MouseMove;
@@ -50,9 +58,10 @@ public class OcrZonesForm : ImageFormBase
         _templateDropDown.SelectedIndexChanged += TemplateDropDown_SelectedIndexChanged;
         _zoneList.SelectedIndexChanged += ZoneList_SelectedIndexChanged;
         _zoneName.TextChanged += ZoneName_TextChanged;
+        _zonePrompt.TextChanged += ZonePrompt_TextChanged;
     }
 
-    private record EditableZone(string Name, RectangleF Rect)
+    private record EditableZone(string Name, RectangleF Rect, string? LlmPrompt = null)
     {
         // Rect coordinates are fractions of the image size (0-1)
     }
@@ -71,9 +80,13 @@ public class OcrZonesForm : ImageFormBase
                 L.Column(
                     C.Label("Zones"),
                     _zoneList.NaturalWidth(200),
-                    L.Row(_zoneName.NaturalWidth(150), _deleteZone)
+                    L.Row(_zoneName.NaturalWidth(150), _deleteZone),
+                    C.Label("AI prompt for this zone (optional, {FieldType} = zone name)"),
+                    _zonePrompt.NaturalWidth(360)
                 ).Scale()
             ),
+            _llmEnabled,
+            L.Row(_llmModelPicker, _llmModelLabel.Scale()),
             L.Row(
                 C.Filler(),
                 L.OkCancel(
@@ -116,7 +129,8 @@ public class OcrZonesForm : ImageFormBase
             foreach (var zone in template.Zones)
             {
                 _zones.Add(new EditableZone(zone.Name,
-                    new RectangleF((float) zone.Left, (float) zone.Top, (float) zone.Width, (float) zone.Height)));
+                    new RectangleF((float) zone.Left, (float) zone.Top, (float) zone.Width, (float) zone.Height),
+                    zone.LlmPrompt));
             }
             _useForScanning.Checked = Config.Get(c => c.ActiveOcrZoneTemplateName) == template.Name;
         }
@@ -181,7 +195,8 @@ public class OcrZonesForm : ImageFormBase
                 Left = z.Rect.X,
                 Top = z.Rect.Y,
                 Width = z.Rect.Width,
-                Height = z.Rect.Height
+                Height = z.Rect.Height,
+                LlmPrompt = string.IsNullOrWhiteSpace(z.LlmPrompt) ? null : z.LlmPrompt
             }).ToImmutableList()
         };
         var templates = Config.Get(c => c.OcrZoneTemplates);
@@ -198,7 +213,38 @@ public class OcrZonesForm : ImageFormBase
         {
             Config.User.Set(c => c.ActiveOcrZoneTemplateName, "");
         }
+        Config.User.Set(c => c.EnableLlmFieldCleanup, _llmEnabled.IsChecked());
         return true;
+    }
+
+    private void PickLlmModel()
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "Choose AI Model",
+            Filters = { new FileFilter("GGUF model files", ".gguf"), new FileFilter("All files", ".*") }
+        };
+        if (dialog.ShowDialog(this) == DialogResult.Ok)
+        {
+            Config.User.Set(c => c.LlmModelPath, dialog.FileName);
+            UpdateLlmModelLabel();
+        }
+    }
+
+    private void UpdateLlmModelLabel()
+    {
+        var configured = Config.Get(c => c.LlmModelPath);
+        if (!string.IsNullOrWhiteSpace(configured))
+        {
+            _llmModelLabel.Text = File.Exists(configured)
+                ? $"Model: {Path.GetFileName(configured)}"
+                : $"Model not found: {configured}";
+        }
+        else
+        {
+            _llmModelLabel.Text =
+                $"No model selected. You can also drop a .gguf file into \"{LlmFieldNormalizer.DefaultModelsFolder}\".";
+        }
     }
 
     private void UpdateZoneList()
@@ -213,6 +259,7 @@ public class OcrZonesForm : ImageFormBase
             }
             _zoneList.SelectedIndex = _selectedZoneIndex;
             _zoneName.Text = _selectedZoneIndex != -1 ? _zones[_selectedZoneIndex].Name : "";
+            _zonePrompt.Text = _selectedZoneIndex != -1 ? _zones[_selectedZoneIndex].LlmPrompt ?? "" : "";
         }
         finally
         {
@@ -226,6 +273,7 @@ public class OcrZonesForm : ImageFormBase
         _selectedZoneIndex = _zoneList.SelectedIndex;
         _syncing = true;
         _zoneName.Text = _selectedZoneIndex != -1 ? _zones[_selectedZoneIndex].Name : "";
+        _zonePrompt.Text = _selectedZoneIndex != -1 ? _zones[_selectedZoneIndex].LlmPrompt ?? "" : "";
         _syncing = false;
         Overlay.Invalidate();
     }
@@ -246,6 +294,12 @@ public class OcrZonesForm : ImageFormBase
         _zoneList.SelectedIndex = selected;
         _syncing = false;
         Overlay.Invalidate();
+    }
+
+    private void ZonePrompt_TextChanged(object? sender, EventArgs e)
+    {
+        if (_syncing || _selectedZoneIndex == -1) return;
+        _zones[_selectedZoneIndex] = _zones[_selectedZoneIndex] with { LlmPrompt = _zonePrompt.Text };
     }
 
     private void DeleteSelectedZone()

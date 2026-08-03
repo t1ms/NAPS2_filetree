@@ -68,6 +68,8 @@ public static class InternalDefaults
             ApplyToAllSelected = false,
             OcrZoneTemplates = ImmutableList<OcrZoneTemplate>.Empty,
             ActiveOcrZoneTemplateName = "",
+            EnableLlmFieldCleanup = false,
+            LlmModelPath = "",
             PdfSettings = new PdfSettings
             {
                 Metadata = new PdfMetadata

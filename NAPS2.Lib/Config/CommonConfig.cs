@@ -236,4 +236,10 @@ public class CommonConfig
 
     [User]
     public string? ActiveOcrZoneTemplateName { get; set; }
+
+    [User]
+    public bool EnableLlmFieldCleanup { get; set; }
+
+    [User]
+    public string? LlmModelPath { get; set; }
 }

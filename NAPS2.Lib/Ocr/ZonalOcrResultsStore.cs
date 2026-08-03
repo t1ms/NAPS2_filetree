@@ -8,6 +8,12 @@ public class ZonalOcrResult
     public DateTime Timestamp { get; init; } = DateTime.Now;
     public string TemplateName { get; init; } = "";
     public List<ZonalOcrField> Fields { get; init; } = new();
+
+    /// <summary>
+    /// A user-visible notice about the extraction (e.g. AI cleanup was enabled but unavailable,
+    /// so raw OCR text is shown).
+    /// </summary>
+    public string? Notice { get; init; }
 }
 
 /// <summary>
