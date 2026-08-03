@@ -178,6 +178,21 @@ public class DesktopCommands
             Text = UiStrings.DocumentCorrection,
             IconName = "document_small"
         };
+        OcrZones = new ActionCommand(desktopSubFormController.ShowOcrZonesForm)
+        {
+            Text = "OCR Field Zones",
+            IconName = "text_small"
+        };
+        ExtractFields = new ActionCommand(desktopSubFormController.ExtractZonalFields)
+        {
+            Text = "Extract Fields",
+            IconName = "text_small"
+        };
+        ZonalOcrResults = new ActionCommand(desktopSubFormController.ShowZonalOcrResultsForm)
+        {
+            Text = "Extracted Field Results",
+            IconName = "text_small"
+        };
         Split = new ActionCommand(desktopSubFormController.ShowSplitForm)
         {
             Text = UiStrings.Split,
@@ -392,6 +407,9 @@ public class DesktopCommands
     public ActionCommand BlackWhite { get; set; }
     public ActionCommand Sharpen { get; set; }
     public ActionCommand DocumentCorrection { get; set; }
+    public ActionCommand OcrZones { get; set; }
+    public ActionCommand ExtractFields { get; set; }
+    public ActionCommand ZonalOcrResults { get; set; }
     public ActionCommand Split { get; set; }
     public ActionCommand Combine { get; set; }
     public ActionCommand EditWithApp { get; set; }

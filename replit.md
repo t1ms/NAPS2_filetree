@@ -66,6 +66,17 @@ Output: `NAPS2.App.WinForms/bin/Release/net9-windows/win-x64/publish/NAPS2.exe`
 
 ---
 
+## Zonal OCR field extraction (custom feature)
+
+CapturePro-style zonal OCR added on top of stock NAPS2:
+- **Templates**: named zone templates (zones stored as page-relative fractions) persisted in user config (`CommonConfig.OcrZoneTemplates`, `ActiveOcrZoneTemplateName`).
+- **Zone editor**: Image menu → "OCR Field Zones" (`NAPS2.Lib/EtoForms/Ui/OcrZonesForm.cs`) — drag to draw named rectangles on a sample page.
+- **Extraction**: `NAPS2.Lib/Ocr/ZonalOcrService.cs` crops each zone (CropTransform) and runs Tesseract per zone; auto-runs on scanned pages when a template is active (`DesktopImagesController`); manual run via Image menu → "Extract Fields". Results in `ZonalOcrResultsStore` (keyed by ProcessedImage.Storage).
+- **Output**: Image menu → "Extracted Field Results" panel with CSV export; auto-save appends a CSV log next to each saved PDF/image and supports `{FieldName}` placeholders in auto-save filename patterns (`AutoSaver`, `ZonalOcrCsv`).
+- Requires a Tesseract language pack (Ocr download button); works even if searchable-PDF OCR is disabled (falls back to `eng`).
+
+---
+
 ## Feature Comparison: NAPS2 vs Kodak CapturePro
 
 See conversation for the full gap analysis.

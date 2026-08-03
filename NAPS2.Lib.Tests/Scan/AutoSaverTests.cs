@@ -1,6 +1,7 @@
-﻿using NAPS2.EtoForms;
+using NAPS2.EtoForms;
 using NAPS2.EtoForms.Notifications;
 using NAPS2.ImportExport;
+using NAPS2.Ocr;
 using NAPS2.Pdf;
 using NAPS2.Scan;
 using NAPS2.Sdk.Tests;
@@ -38,7 +39,8 @@ public class AutoSaverTests : ContextualTests
             _overwritePrompt,
             _config,
             ImageContext,
-            new UiImageList()
+            new UiImageList(),
+            new ZonalOcrService(ScanningContext, _config, new ZonalOcrResultsStore())
         );
     }
 

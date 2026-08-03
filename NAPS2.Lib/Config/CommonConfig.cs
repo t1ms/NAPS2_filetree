@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using NAPS2.Config.Model;
 using NAPS2.Escl;
 using NAPS2.ImportExport.Email;
@@ -230,4 +230,10 @@ public class CommonConfig
 
     [User]
     public bool ApplyToAllSelected { get; set; }
+
+    [User]
+    public ImmutableList<OcrZoneTemplate> OcrZoneTemplates { get; set; } = ImmutableList<OcrZoneTemplate>.Empty;
+
+    [User]
+    public string? ActiveOcrZoneTemplateName { get; set; }
 }

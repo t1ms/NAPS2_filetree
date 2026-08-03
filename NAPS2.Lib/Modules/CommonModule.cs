@@ -117,6 +117,8 @@ public class CommonModule : Module
                 : Environment.ExpandEnvironmentVariables(customComponentsPath);
             return new TesseractLanguageManager(componentsPath);
         }).SingleInstance();
+        builder.RegisterType<ZonalOcrResultsStore>().AsSelf().SingleInstance();
+        builder.RegisterType<ZonalOcrService>().AsSelf().SingleInstance();
         builder.Register<IOcrEngine>(ctx =>
         {
             var engine = TesseractOcrEngine.BundledWithModes(ctx.Resolve<TesseractLanguageManager>().TessdataBasePath);

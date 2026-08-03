@@ -1,6 +1,7 @@
 using NAPS2.EtoForms;
 using NAPS2.EtoForms.Notifications;
 using NAPS2.ImportExport.Images;
+using NAPS2.Ocr;
 using NAPS2.Pdf;
 using NAPS2.Scan;
 
@@ -17,10 +18,12 @@ public class AutoSaver
     private readonly Naps2Config _config;
     private readonly ImageContext _imageContext;
     private readonly UiImageList _imageList;
+    private readonly ZonalOcrService _zonalOcrService;
 
     public AutoSaver(ErrorOutput errorOutput, DialogHelper dialogHelper,
         OperationProgress operationProgress, ISaveNotify notify, PdfExporter pdfExporter,
-        IOverwritePrompt overwritePrompt, Naps2Config config, ImageContext imageContext, UiImageList imageList)
+        IOverwritePrompt overwritePrompt, Naps2Config config, ImageContext imageContext, UiImageList imageList,
+        ZonalOcrService zonalOcrService)
     {
         _errorOutput = errorOutput;
         _dialogHelper = dialogHelper;
@@ -31,6 +34,7 @@ public class AutoSaver
         _config = config;
         _imageContext = imageContext;
         _imageList = imageList;
+        _zonalOcrService = zonalOcrService;
     }
 
     public IAsyncEnumerable<ProcessedImage> Save(AutoSaveSettings settings, IAsyncEnumerable<ProcessedImage> images)
@@ -121,7 +125,31 @@ public class AutoSaver
         {
             return (true, null);
         }
-        string subPath = placeholders.Substitute(settings.FilePath, true, i);
+        // Collect zonal OCR field results (waiting for any in-progress extractions, or extracting
+        // now if an active zone template is configured)
+        var zonalResults = new List<ZonalOcrResult>();
+        foreach (var image in images)
+        {
+            try
+            {
+                var result = await _zonalOcrService.GetOrExtract(image);
+                if (result != null)
+                {
+                    zonalResults.Add(result);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.ErrorException("Error running zonal OCR during auto save", ex);
+            }
+        }
+        string filePathPattern = settings.FilePath;
+        if (zonalResults.Count > 0)
+        {
+            // Support {FieldName} placeholders in the auto-save file name pattern
+            filePathPattern = ZonalOcrCsv.SubstituteFields(filePathPattern, zonalResults[0].Fields);
+        }
+        string subPath = placeholders.Substitute(filePathPattern, true, i);
         if (settings.PromptForFilePath)
         {
             string? newPath = null!;
@@ -149,6 +177,10 @@ public class AutoSaver
                 _operationProgress.ShowProgress(op);
             }
             bool success = await op.Success;
+            if (success)
+            {
+                AppendZonalOcrCsv(subPath, zonalResults);
+            }
             if (success && doNotify)
             {
                 _notify.PdfSaved(subPath);
@@ -163,11 +195,32 @@ public class AutoSaver
                 _operationProgress.ShowProgress(op);
             }
             bool success = await op.Success;
+            if (success)
+            {
+                AppendZonalOcrCsv(subPath, zonalResults);
+            }
             if (success && doNotify && op.FirstFileSaved != null)
             {
                 _notify.ImagesSaved(images.Count, op.FirstFileSaved);
             }
             return (success, subPath);
+        }
+    }
+
+    private void AppendZonalOcrCsv(string savedFilePath, List<ZonalOcrResult> zonalResults)
+    {
+        if (zonalResults.Count == 0)
+        {
+            return;
+        }
+        try
+        {
+            string csvPath = Path.ChangeExtension(savedFilePath, ".csv");
+            ZonalOcrCsv.AppendRows(csvPath, zonalResults, savedFilePath);
+        }
+        catch (Exception ex)
+        {
+            Log.ErrorException("Error writing zonal OCR CSV log", ex);
         }
     }
 }

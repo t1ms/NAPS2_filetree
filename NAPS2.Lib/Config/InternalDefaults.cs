@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using NAPS2.ImportExport;
 using NAPS2.ImportExport.Email;
 using NAPS2.ImportExport.Email.Oauth;
@@ -66,6 +66,8 @@ public static class InternalDefaults
             EditWithAppPath = "",
             EditWithAppName = "",
             ApplyToAllSelected = false,
+            OcrZoneTemplates = ImmutableList<OcrZoneTemplate>.Empty,
+            ActiveOcrZoneTemplateName = "",
             PdfSettings = new PdfSettings
             {
                 Metadata = new PdfMetadata

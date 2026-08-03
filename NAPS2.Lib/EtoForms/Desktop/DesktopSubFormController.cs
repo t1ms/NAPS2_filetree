@@ -1,3 +1,4 @@
+using System.Threading;
 using NAPS2.EtoForms.Ui;
 using NAPS2.Ocr;
 
@@ -9,14 +10,19 @@ public class DesktopSubFormController : IDesktopSubFormController
     private readonly UiImageList _imageList;
     private readonly DesktopImagesController _desktopImagesController;
     private readonly TesseractLanguageManager _tesseractLanguageManager;
+    private readonly ZonalOcrService _zonalOcrService;
+    private readonly ZonalOcrResultsStore _zonalOcrResultsStore;
 
     public DesktopSubFormController(IFormFactory formFactory, UiImageList imageList,
-        DesktopImagesController desktopImagesController, TesseractLanguageManager tesseractLanguageManager)
+        DesktopImagesController desktopImagesController, TesseractLanguageManager tesseractLanguageManager,
+        ZonalOcrService zonalOcrService, ZonalOcrResultsStore zonalOcrResultsStore)
     {
         _formFactory = formFactory;
         _imageList = imageList;
         _desktopImagesController = desktopImagesController;
         _tesseractLanguageManager = tesseractLanguageManager;
+        _zonalOcrService = zonalOcrService;
+        _zonalOcrResultsStore = zonalOcrResultsStore;
     }
 
     private Func<ListSelection<UiImage>>? SelectionFunc { get; init; }
@@ -26,7 +32,7 @@ public class DesktopSubFormController : IDesktopSubFormController
     public IDesktopSubFormController WithSelection(Func<ListSelection<UiImage>> selectionFunc)
     {
         return new DesktopSubFormController(_formFactory, _imageList, _desktopImagesController,
-            _tesseractLanguageManager)
+            _tesseractLanguageManager, _zonalOcrService, _zonalOcrResultsStore)
         {
             SelectionFunc = selectionFunc
         };
@@ -79,6 +85,51 @@ public class DesktopSubFormController : IDesktopSubFormController
                 _formFactory.Create<OcrSetupForm>().ShowModal();
             }
         }
+    }
+
+    public void ShowOcrZonesForm() => ShowImageForm<OcrZonesForm>();
+
+    public void ShowZonalOcrResultsForm()
+    {
+        _formFactory.Create<ZonalOcrResultsForm>().ShowModal();
+    }
+
+    public async void ExtractZonalFields()
+    {
+        var template = _zonalOcrService.GetActiveTemplate();
+        if (template == null)
+        {
+            // No active template defined yet; let the user define one first
+            ShowOcrZonesForm();
+            return;
+        }
+        var selection = Selection;
+        var images = selection.Any() ? selection.ToList() : _imageList.Images.ToList();
+        if (images.Count == 0) return;
+        try
+        {
+            foreach (var uiImage in images)
+            {
+                using var processedImage = uiImage.GetClonedImage();
+                // Waits for any in-progress extraction (e.g. auto-extract after scanning) instead of
+                // starting a duplicate one
+                var existing = await _zonalOcrResultsStore.WaitForResult(processedImage);
+                if (existing == null)
+                {
+                    var result = await Task.Run(() =>
+                        _zonalOcrService.ExtractFields(processedImage, template, CancellationToken.None));
+                    if (result != null)
+                    {
+                        _zonalOcrResultsStore.AddResult(processedImage, result);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.ErrorException("Error extracting zonal OCR fields", ex);
+        }
+        ShowZonalOcrResultsForm();
     }
 
     public void ShowBatchScanForm()

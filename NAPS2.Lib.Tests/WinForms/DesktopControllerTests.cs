@@ -2,6 +2,7 @@ using NAPS2.EtoForms;
 using NAPS2.EtoForms.Desktop;
 using NAPS2.EtoForms.Notifications;
 using NAPS2.ImportExport;
+using NAPS2.Ocr;
 using NAPS2.Platform.Windows;
 using NAPS2.Recovery;
 using NAPS2.Remoting;
@@ -56,7 +57,9 @@ public class DesktopControllerTests : ContextualTests
         _imageClipboard = new ImageClipboard();
         _exportHelper = Substitute.For<IExportController>();
         _dialogHelper = Substitute.For<DialogHelper>();
-        _desktopImagesController = new DesktopImagesController(_imageList);
+        _desktopImagesController = new DesktopImagesController(_imageList,
+            new ZonalOcrService(ScanningContext, _config, new ZonalOcrResultsStore()),
+            new ZonalOcrResultsStore());
         _desktopScanController = Substitute.For<IDesktopScanController>();
         _desktopFormProvider = new DesktopFormProvider();
         _scannedImagePrinter = Substitute.For<IScannedImagePrinter>();
@@ -86,7 +89,8 @@ public class DesktopControllerTests : ContextualTests
             _scannedImagePrinter,
             _sharedDeviceManager,
             _processCoordinator,
-            new RecoveryManager(ScanningContext)
+            new RecoveryManager(ScanningContext),
+            Substitute.For<IFormFactory>()
         );
 
         _operationFactory.Create<RecoveryOperation>().Returns(

@@ -13,6 +13,9 @@ public interface IDesktopSubFormController
     void ShowRotateForm();
     void ShowProfilesForm();
     void ShowOcrForm();
+    void ShowOcrZonesForm();
+    void ShowZonalOcrResultsForm();
+    void ExtractZonalFields();
     void ShowBatchScanForm();
     void ShowScannerSharingForm();
     void ShowViewerForm();

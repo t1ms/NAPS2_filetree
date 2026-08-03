@@ -7,3 +7,9 @@ description: Gotchas when building the portable Windows NAPS2 ZIP on Linux/Repli
 - The Nix `dotnet-9.0` module provides an SDK patch (e.g. 9.0.308) below what upstream global.json pins; set global.json to `9.0.100` + `rollForward: latestFeature`.
 - Long `dotnet publish` runs must be launched with `setsid nohup ... & disown` in ShellExec, or the process dies when the shell session ends. First NuGet restore can silently hang; a plain `dotnet restore` retry succeeded quickly.
 - Portable ZIP recipe verified: WinForms publish dir → `App/`, add win-x86 single-file `NAPS2.Worker.exe` beside `NAPS2.exe`, empty `Data/` beside `App/`; twaindsm DSMs/Pdfium/Tesseract flow through publish automatically. NAPS2.Portable.exe (net462) can't build on Linux — run App/NAPS2.exe directly.
+
+## Background publish caveat (Aug 2026)
+`setsid nohup dotnet publish ... & disown` died silently twice (empty log, no process). Reliable approach: run `dotnet restore` first (plain retry if it hangs at "Determining projects to restore..."), then run each publish in the foreground with `timeout 290` — win-x64 WinForms publish completes in ~3-4 min after restore.
+
+## Zonal OCR test note
+`Path.GetInvalidFileNameChars()` differs by platform (Linux allows ':'); filename sanitization uses a fixed Windows char set so tests and behavior are consistent cross-platform. GTK-dependent tests (AutoSaverTests etc.) fail on this runner with libgobject DllNotFoundException — environmental, not code.
