@@ -43,7 +43,8 @@ public class AutoSaverTests : ContextualTests
             new UiImageList(),
             new ZonalOcrService(ScanningContext, _config, new ZonalOcrResultsStore(),
                 new LlmFieldNormalizer(_config)),
-            new SearchIndexService(Path.Combine(FolderPath, "search-index.db"))
+            new SearchIndexService(Path.Combine(FolderPath, "search-index.db")),
+            new LlmDocumentExtractor(ScanningContext, _config, new LlmFieldNormalizer(_config))
         );
     }
 

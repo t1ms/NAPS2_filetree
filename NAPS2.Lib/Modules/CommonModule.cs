@@ -121,6 +121,7 @@ public class CommonModule : Module
         builder.RegisterType<SearchIndexService>().AsSelf().SingleInstance();
         builder.RegisterType<ZonalOcrResultsStore>().AsSelf().SingleInstance();
         builder.RegisterType<LlmFieldNormalizer>().AsSelf().SingleInstance();
+        builder.RegisterType<LlmDocumentExtractor>().AsSelf().SingleInstance();
         builder.RegisterType<ZonalOcrService>().AsSelf().SingleInstance();
         builder.Register<IOcrEngine>(ctx =>
         {
