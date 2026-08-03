@@ -242,4 +242,19 @@ public class CommonConfig
 
     [User]
     public string? LlmModelPath { get; set; }
+
+    [User]
+    public bool EnableHotFolder { get; set; }
+
+    [User]
+    public string? HotFolderPath { get; set; }
+
+    [User]
+    public string? HotFolderDestinationPath { get; set; }
+
+    /// <summary>
+    /// The name of the profile whose auto-save settings are applied to hot-folder imports.
+    /// </summary>
+    [User]
+    public string? HotFolderProfileName { get; set; }
 }

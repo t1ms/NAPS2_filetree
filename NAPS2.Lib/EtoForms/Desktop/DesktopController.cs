@@ -38,6 +38,7 @@ public class DesktopController
     private readonly ProcessCoordinator _processCoordinator;
     private readonly RecoveryManager _recoveryManager;
     private readonly IFormFactory _formFactory;
+    private readonly IHotFolderService _hotFolderService;
     private readonly ImageTransfer _imageTransfer = new();
 
     private bool _closed;
@@ -55,7 +56,7 @@ public class DesktopController
         DesktopImagesController desktopImagesController, IDesktopScanController desktopScanController,
         DesktopFormProvider desktopFormProvider, IScannedImagePrinter scannedImagePrinter,
         ISharedDeviceManager sharedDeviceManager, ProcessCoordinator processCoordinator,
-        RecoveryManager recoveryManager, IFormFactory formFactory)
+        RecoveryManager recoveryManager, IFormFactory formFactory, IHotFolderService hotFolderService)
     {
         _scanningContext = scanningContext;
         _imageList = imageList;
@@ -78,6 +79,7 @@ public class DesktopController
         _processCoordinator = processCoordinator;
         _recoveryManager = recoveryManager;
         _formFactory = formFactory;
+        _hotFolderService = hotFolderService;
     }
 
     public bool SkipRecoveryCleanup { get; set; }
@@ -99,6 +101,7 @@ public class DesktopController
         ShowRecoveryPrompt();
         ImportFilesFromCommandLine();
         InitThumbnailRendering();
+        _hotFolderService.Start();
         await RunStillImageEvents();
         SetFirstRunDate();
         ShowDonationOrReviewPrompt();
@@ -189,6 +192,7 @@ public class DesktopController
     public void Cleanup()
     {
         if (_suspended) return;
+        _hotFolderService.Stop();
         _processCoordinator.KillServer();
         _sharedDeviceManager.StopSharing();
         if (!SkipRecoveryCleanup && !_config.Get(c => c.KeepSession))

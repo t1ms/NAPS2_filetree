@@ -35,6 +35,7 @@ public class GuiModule : Module
         builder.RegisterType<DesktopSubFormController>().As<IDesktopSubFormController>().SingleInstance();
         builder.RegisterType<DesktopFormProvider>().AsSelf().SingleInstance();
         builder.RegisterType<ImageListActions>().AsSelf().SingleInstance();
+        builder.RegisterType<HotFolderService>().AsSelf().As<IHotFolderService>().SingleInstance();
         builder.RegisterInstance(EtoPlatform.Current.DarkModeProvider);
         builder.RegisterInstance(EtoPlatform.Current.ColorScheme);
 

@@ -321,6 +321,11 @@ public class DesktopCommands
             Text = UiStrings.Settings,
             IconName = hiddenButtons.HasFlag(ToolbarButtons.About) ? "cog" : "cog_small"
         };
+        HotFolderSettings = new ActionCommand(desktopSubFormController.ShowHotFolderSettingsForm)
+        {
+            Text = "Hot Folder...",
+            IconName = "folder_small"
+        };
         About = new ActionCommand(desktopSubFormController.ShowAboutForm)
         {
             Text = UiStrings.About,
@@ -446,6 +451,7 @@ public class DesktopCommands
     public ActionCommand ClearAll { get; set; }
     public ActionCommand LanguageMenu { get; set; }
     public ActionCommand Settings { get; set; }
+    public ActionCommand HotFolderSettings { get; set; }
     public ActionCommand About { get; set; }
     public ActionCommand ZoomIn { get; set; }
     public ActionCommand ZoomOut { get; set; }

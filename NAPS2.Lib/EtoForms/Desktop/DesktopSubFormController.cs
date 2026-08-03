@@ -181,6 +181,11 @@ public class DesktopSubFormController : IDesktopSubFormController
         _formFactory.Create<SettingsForm>().ShowModal();
     }
 
+    public void ShowHotFolderSettingsForm()
+    {
+        _formFactory.Create<HotFolderSettingsForm>().ShowModal();
+    }
+
     public void ShowAboutForm()
     {
         _formFactory.Create<AboutForm>().ShowModal();

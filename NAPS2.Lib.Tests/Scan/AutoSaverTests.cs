@@ -82,6 +82,14 @@ public class AutoSaverTests : ContextualTests
     }
 
     [Fact]
+    public void HotFolderSave_DoesNotMarkDesktopImagesSaved()
+    {
+        // The hot-folder entrypoint explicitly routes to InternalSave with UI-state tracking off.
+        // This guards the important invariant that background imports cannot mark an open document saved.
+        Assert.False(AutoSaver.ShouldUpdateUiSavedStateForHotFolder());
+    }
+
+    [Fact]
     public async Task SingleJpeg()
     {
         var settings = new AutoSaveSettings

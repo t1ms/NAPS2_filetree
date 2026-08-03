@@ -92,7 +92,8 @@ public class DesktopControllerTests : ContextualTests
             _sharedDeviceManager,
             _processCoordinator,
             new RecoveryManager(ScanningContext),
-            Substitute.For<IFormFactory>()
+            Substitute.For<IFormFactory>(),
+            Substitute.For<IHotFolderService>()
         );
 
         _operationFactory.Create<RecoveryOperation>().Returns(

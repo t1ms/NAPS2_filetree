@@ -23,6 +23,7 @@ internal class SettingsForm : EtoDialogBase
     private readonly ActionCommand _imageSettingsCommand;
     private readonly ActionCommand _emailSettingsCommand;
     private readonly ActionCommand _keyboardShortcutsCommand;
+    private readonly ActionCommand _hotFolderSettingsCommand;
     private readonly Button _restoreDefaults = new() { Text = UiStrings.RestoreDefaults };
 
     public SettingsForm(Naps2Config config, DesktopSubFormController desktopSubFormController,
@@ -32,6 +33,10 @@ internal class SettingsForm : EtoDialogBase
         IconName = "cog_small";
 
         _desktopFormProvider = desktopFormProvider;
+        _hotFolderSettingsCommand = new ActionCommand(desktopSubFormController.ShowHotFolderSettingsForm)
+        {
+            Text = "Hot Folder..."
+        };
         UpdateValues(Config);
         _restoreDefaults.Click += RestoreDefaults_Click;
 
@@ -107,6 +112,7 @@ internal class SettingsForm : EtoDialogBase
             //     C.Button(_pdfSettingsCommand, ButtonImagePosition.Left),
             //     C.Button(_imageSettingsCommand, ButtonImagePosition.Left),
             //     C.Button(_emailSettingsCommand, ButtonImagePosition.Left)),
+            L.Row(C.Button(_hotFolderSettingsCommand, ButtonImagePosition.Left)),
             C.Filler(),
             L.Row(
                 _restoreDefaults.MinWidth(140),

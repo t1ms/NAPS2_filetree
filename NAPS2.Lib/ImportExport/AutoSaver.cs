@@ -81,7 +81,18 @@ public class AutoSaver
         });
     }
 
-    private async Task<bool> InternalSave(AutoSaveSettings settings, List<ProcessedImage> images)
+    public async Task<bool> SaveForHotFolder(AutoSaveSettings settings, List<ProcessedImage> images)
+    {
+        // Hot-folder documents never belong to the desktop image list. In particular, do not
+        // advance its saved-state token: that would incorrectly make an unrelated open document
+        // look saved and suppress the user's unsaved-changes prompt.
+        return await InternalSave(settings, images, updateUiSavedState: false);
+    }
+
+    internal static bool ShouldUpdateUiSavedStateForHotFolder() => false;
+
+    private async Task<bool> InternalSave(AutoSaveSettings settings, List<ProcessedImage> images,
+        bool updateUiSavedState = true)
     {
         try
         {
@@ -100,7 +111,10 @@ public class AutoSaver
                     // doesn't really work here since populating the UiImageList happens asynchronously so the images
                     // we're saving might not be present yet. In practice waiting until after saving will ensure the
                     // list is populated so that this logic works correctly.
-                    _imageList.MarkSaved(_imageList.CurrentState, imagesToSave);
+                    if (updateUiSavedState)
+                    {
+                        _imageList.MarkSaved(_imageList.CurrentState, imagesToSave);
+                    }
                     firstFileSaved ??= filePath;
                 }
                 else

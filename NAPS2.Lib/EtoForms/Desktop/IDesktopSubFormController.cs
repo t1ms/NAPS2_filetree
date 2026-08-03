@@ -25,4 +25,5 @@ public interface IDesktopSubFormController
     void ShowEmailSettingsForm();
     void ShowAboutForm();
     void ShowSettingsForm();
+    void ShowHotFolderSettingsForm();
 }

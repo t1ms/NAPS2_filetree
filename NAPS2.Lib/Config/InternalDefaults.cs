@@ -70,6 +70,10 @@ public static class InternalDefaults
             ActiveOcrZoneTemplateName = "",
             EnableLlmFieldCleanup = false,
             LlmModelPath = "",
+            EnableHotFolder = false,
+            HotFolderPath = "",
+            HotFolderDestinationPath = "",
+            HotFolderProfileName = "",
             PdfSettings = new PdfSettings
             {
                 Metadata = new PdfMetadata
