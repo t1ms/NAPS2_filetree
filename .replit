@@ -1,4 +1,4 @@
-modules = ["dotnet-7.0", "python-3.12"]
+modules = ["dotnet-7.0", "python-3.12", "dotnet-9.0"]
 
 [nix]
 channel = "stable-25_05"

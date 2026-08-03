@@ -12,8 +12,6 @@
     <Title>NAPS2 - Not Another PDF Scanner</Title>
     <Product>NAPS2 - Not Another PDF Scanner</Product>
     <Configurations>Debug;Release;DebugLang;Release-Msi;Release-Zip</Configurations>
-    <Protobuf_ProtocFullPath>/opt/homebrew/bin/protoc</Protobuf_ProtocFullPath>
-    <gRPC_PluginFullPath>/opt/homebrew/bin/grpc_csharp_plugin</gRPC_PluginFullPath>
   </PropertyGroup>
 
   <Import Project="..\NAPS2.Setup\targets\CommonTargets.targets" />

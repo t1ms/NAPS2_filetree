@@ -1,0 +1,9 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "YQVDkILXXSVgbocy5Oi4k"
+uri = "file://naps2-portable-win64.zip"
+type = "unspecified"
+title = "NAPS2 Portable for Windows (with TWAIN)"
+description = "No-install portable NAPS2. Extract anywhere on Windows and run App\\NAPS2.exe. Includes the 32-bit TWAIN worker and bundled TWAIN DSMs for the Kodak i4250."

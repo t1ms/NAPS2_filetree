@@ -1,0 +1,1 @@
+- [NAPS2 cross-compile on Replit](naps2-cross-compile.md) — Linux build gotchas: homebrew protoc overrides, SDK pin, setsid for long publishes, portable ZIP layout.

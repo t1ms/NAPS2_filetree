@@ -27,6 +27,20 @@ NAPS2 is an open-source, cross-platform document scanning application written in
 
 ## Building a Portable Windows ZIP (no installer needed)
 
+### Cross-compiling on Replit (Linux) — verified working
+Requires .NET 9 SDK (installed via Replit module `dotnet-9.0`; `global.json` pinned to `9.0.100` with `rollForward: latestFeature`).
+
+```bash
+dotnet publish NAPS2.App.WinForms -r win-x64 -c Release --self-contained true /p:DebugType=None /p:DebugSymbols=false
+dotnet publish NAPS2.App.Worker -c Release /p:DebugType=None /p:DebugSymbols=false   # win-x86 single-file 32-bit TWAIN worker
+```
+
+Then assemble: copy the WinForms publish dir to `App/`, drop `NAPS2.Worker.exe` next to `NAPS2.exe`, add an empty `Data/` folder alongside `App/`, and zip. `_win32/twaindsm.dll`, `_win64/twaindsm.dll`, appsettings.xml, Pdfium and Tesseract all come through the publish output automatically. `NAPS2.Portable.exe` (net462 launcher) cannot be built on Linux — run `App/NAPS2.exe` directly.
+
+Output produced: `naps2-portable-win64.zip` (repo root).
+
+### Official tooling (Windows only)
+
 The official portable package is produced by NAPS2.Tools:
 
 ```bash

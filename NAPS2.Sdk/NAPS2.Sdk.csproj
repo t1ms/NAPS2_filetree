@@ -16,8 +16,6 @@
     <Description>NAPS2.Sdk is a fully-featured scanning library, supporting WIA, TWAIN, SANE, and ESCL scanners on Windows, Mac, and Linux.</Description>
     <PackageTags>naps2 sdk scanner wia twain sane escl</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <Protobuf_ProtocFullPath>/opt/homebrew/bin/protoc</Protobuf_ProtocFullPath>
-    <gRPC_PluginFullPath>/opt/homebrew/bin/grpc_csharp_plugin</gRPC_PluginFullPath>
   </PropertyGroup>
 
   <Import Project="..\NAPS2.Setup\targets\CommonTargets.targets" />
