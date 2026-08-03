@@ -16,6 +16,7 @@ public interface IDesktopSubFormController
     void ShowOcrZonesForm();
     void ShowZonalOcrResultsForm();
     void ExtractZonalFields();
+    void ShowSearchForm();
     void ShowBatchScanForm();
     void ShowScannerSharingForm();
     void ShowViewerForm();

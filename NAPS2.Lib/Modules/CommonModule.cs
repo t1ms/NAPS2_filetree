@@ -13,6 +13,7 @@ using NAPS2.Remoting.Server;
 using NAPS2.Remoting.Worker;
 using NAPS2.Scan;
 using NAPS2.Scan.Internal;
+using NAPS2.Search;
 
 namespace NAPS2.Modules;
 
@@ -117,6 +118,7 @@ public class CommonModule : Module
                 : Environment.ExpandEnvironmentVariables(customComponentsPath);
             return new TesseractLanguageManager(componentsPath);
         }).SingleInstance();
+        builder.RegisterType<SearchIndexService>().AsSelf().SingleInstance();
         builder.RegisterType<ZonalOcrResultsStore>().AsSelf().SingleInstance();
         builder.RegisterType<LlmFieldNormalizer>().AsSelf().SingleInstance();
         builder.RegisterType<ZonalOcrService>().AsSelf().SingleInstance();

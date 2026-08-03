@@ -348,6 +348,7 @@ public abstract class DesktopForm : EtoFormBase
                 .Append(Commands.OcrZones)
                 .Append(Commands.ExtractFields)
                 .Append(Commands.ZonalOcrResults)
+                .Append(Commands.SearchDocuments)
                 .Separator()
                 .Append(Commands.Split)
                 .Append(Commands.Combine)

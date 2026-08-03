@@ -1,6 +1,7 @@
-﻿using NAPS2.ImportExport;
+using NAPS2.ImportExport;
 using NAPS2.ImportExport.Email;
 using NAPS2.Ocr;
+using NAPS2.Search;
 
 namespace NAPS2.Pdf;
 
@@ -9,13 +10,15 @@ internal class SavePdfOperation : OperationBase
     private readonly PdfExporter _pdfExporter;
     private readonly IOverwritePrompt _overwritePrompt;
     private readonly IEmailProviderFactory? _emailProviderFactory;
+    private readonly SearchIndexService? _searchIndexService;
 
     public SavePdfOperation(PdfExporter pdfExporter, IOverwritePrompt overwritePrompt,
-        IEmailProviderFactory? emailProviderFactory = null)
+        IEmailProviderFactory? emailProviderFactory = null, SearchIndexService? searchIndexService = null)
     {
         _pdfExporter = pdfExporter;
         _overwritePrompt = overwritePrompt;
         _emailProviderFactory = emailProviderFactory;
+        _searchIndexService = searchIndexService;
 
         AllowCancel = true;
         AllowBackground = true;
@@ -92,6 +95,8 @@ internal class SavePdfOperation : OperationBase
                     {
                         break;
                     }
+                    // Index the saved PDF for local full-text search (in the background so saving isn't slowed)
+                    _searchIndexService?.IndexPdfInBackground(currentFileName);
                     emailMessage?.Attachments.Add(new EmailAttachment
                     {
                         FilePath = currentFileName,

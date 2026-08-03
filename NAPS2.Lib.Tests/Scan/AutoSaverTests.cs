@@ -5,6 +5,7 @@ using NAPS2.Ocr;
 using NAPS2.Pdf;
 using NAPS2.Scan;
 using NAPS2.Sdk.Tests;
+using NAPS2.Search;
 using NAPS2.Sdk.Tests.Asserts;
 using NSubstitute;
 using Xunit;
@@ -41,7 +42,8 @@ public class AutoSaverTests : ContextualTests
             ImageContext,
             new UiImageList(),
             new ZonalOcrService(ScanningContext, _config, new ZonalOcrResultsStore(),
-                new LlmFieldNormalizer(_config))
+                new LlmFieldNormalizer(_config)),
+            new SearchIndexService(Path.Combine(FolderPath, "search-index.db"))
         );
     }
 

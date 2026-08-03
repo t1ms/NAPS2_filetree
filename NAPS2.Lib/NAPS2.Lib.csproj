@@ -31,6 +31,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.10" />
     <ProjectReference Include="..\NAPS2.Sdk\NAPS2.Sdk.csproj" />
     <ProjectReference Include="..\NAPS2.Escl.Server\NAPS2.Escl.Server.csproj" />
     <PackageReference Include="Autofac" Version="8.0.0" />

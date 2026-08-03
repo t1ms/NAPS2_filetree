@@ -4,6 +4,7 @@ using NAPS2.ImportExport.Images;
 using NAPS2.Ocr;
 using NAPS2.Pdf;
 using NAPS2.Scan;
+using NAPS2.Search;
 
 namespace NAPS2.ImportExport;
 
@@ -19,12 +20,14 @@ public class AutoSaver
     private readonly ImageContext _imageContext;
     private readonly UiImageList _imageList;
     private readonly ZonalOcrService _zonalOcrService;
+    private readonly SearchIndexService _searchIndexService;
 
     public AutoSaver(ErrorOutput errorOutput, DialogHelper dialogHelper,
         OperationProgress operationProgress, ISaveNotify notify, PdfExporter pdfExporter,
         IOverwritePrompt overwritePrompt, Naps2Config config, ImageContext imageContext, UiImageList imageList,
-        ZonalOcrService zonalOcrService)
+        ZonalOcrService zonalOcrService, SearchIndexService searchIndexService)
     {
+        _searchIndexService = searchIndexService;
         _errorOutput = errorOutput;
         _dialogHelper = dialogHelper;
         _operationProgress = operationProgress;
@@ -171,7 +174,7 @@ public class AutoSaver
             {
                 subPath = placeholders.Substitute(subPath, true, 0, 1);
             }
-            var op = new SavePdfOperation(_pdfExporter, _overwritePrompt);
+            var op = new SavePdfOperation(_pdfExporter, _overwritePrompt, searchIndexService: _searchIndexService);
             if (op.Start(subPath, placeholders, images, _config.Get(c => c.PdfSettings), _config.DefaultOcrParams()))
             {
                 _operationProgress.ShowProgress(op);

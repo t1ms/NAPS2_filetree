@@ -94,6 +94,11 @@ public class DesktopSubFormController : IDesktopSubFormController
         _formFactory.Create<ZonalOcrResultsForm>().ShowModal();
     }
 
+    public void ShowSearchForm()
+    {
+        _formFactory.Create<SearchForm>().ShowModal();
+    }
+
     public async void ExtractZonalFields()
     {
         var template = _zonalOcrService.GetActiveTemplate();

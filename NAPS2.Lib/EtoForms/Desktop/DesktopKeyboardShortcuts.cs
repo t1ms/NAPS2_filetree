@@ -26,6 +26,7 @@ public class DesktopKeyboardShortcuts
         _ksm.Assign("Mod+Right", commands.MoveDown);
         _ksm.Assign("Del", commands.Delete);
         _ksm.Assign("Mod+A", commands.SelectAll);
+        _ksm.Assign("Mod+Shift+F", commands.SearchDocuments);
         _ksm.Assign("Mod+C", commands.Copy);
         _ksm.Assign("Mod+V", commands.Paste);
         _ksm.Assign("Mod+Z", commands.Undo);
