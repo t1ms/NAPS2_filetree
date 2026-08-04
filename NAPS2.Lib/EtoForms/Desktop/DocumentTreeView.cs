@@ -107,13 +107,7 @@ internal class DocumentTreeView
             {
                 if (_treeView.SelectedItem is GroupTreeItem targetGroupItem)
                 {
-                    // Move the selected items to the new group
-                    foreach (var image in _imageList.Selection)
-                    {
-                        image.DocumentGroupId = targetGroupItem.Group.Id;
-                        image.InvalidateThumbnail();
-                    }
-                    _documentManager.AddGroup(""); // force GroupsChanged
+                    _documentManager.MoveImagesToGroup(_imageList.Selection, targetGroupItem.Group);
                 }
             }
         }
@@ -157,9 +151,10 @@ internal class DocumentTreeView
 
         if (dialog.ShowModal(_parentForm))
         {
-            groupItem.Group.IndexField = textBox.Text;
-            groupItem.UpdateText();
-            _treeView.ReloadItem(groupItem);
+            if (!_documentManager.TryRenameGroup(groupItem.Group, textBox.Text, out var errorMessage))
+            {
+                MessageBox.Show(errorMessage, "Rename Document", MessageBoxButtons.OK, MessageBoxType.Error);
+            }
         }
     }
 

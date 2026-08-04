@@ -84,6 +84,70 @@ public class DocumentManagerTests : ContextualTests
         Assert.Single(documentManager.Groups);
     }
 
+    [Fact]
+    public void MergeThenSplit_ReusesTheMissingDefaultName()
+    {
+        var imageList = new UiImageList();
+        var documentManager = new DocumentManager(imageList);
+        var firstGroup = documentManager.Groups.Single();
+        var secondGroup = documentManager.AddGroup("Document 2");
+        var thirdGroup = documentManager.AddGroup("Document 3");
+        var image1 = CreateImage(firstGroup);
+        var image2 = CreateImage(secondGroup);
+        var image3 = CreateImage(secondGroup);
+        var image4 = CreateImage(thirdGroup);
+        AddImages(imageList, image1, image2, image3, image4);
+
+        documentManager.MergeWithPrevious(secondGroup);
+        var splitGroup = documentManager.SplitAtImage(image2);
+
+        Assert.NotNull(splitGroup);
+        Assert.Equal(new[] { "Document 1", "Document 2", "Document 3" },
+            documentManager.Groups.Select(group => group.IndexField));
+        Assert.Equal(firstGroup.Id, image1.DocumentGroupId);
+        Assert.Equal(splitGroup!.Id, image2.DocumentGroupId);
+        Assert.Equal(splitGroup.Id, image3.DocumentGroupId);
+        Assert.Equal(thirdGroup.Id, image4.DocumentGroupId);
+    }
+
+    [Fact]
+    public void RenameGroup_RejectsBlankAndDuplicateNames()
+    {
+        var imageList = new UiImageList();
+        var documentManager = new DocumentManager(imageList);
+        var firstGroup = documentManager.Groups.Single();
+        var secondGroup = documentManager.AddGroup("Document 2");
+
+        Assert.False(documentManager.TryRenameGroup(secondGroup, "", out var blankError));
+        Assert.Equal("Document 2", secondGroup.IndexField);
+        Assert.NotNull(blankError);
+
+        Assert.False(documentManager.TryRenameGroup(secondGroup, "document 1", out var duplicateError));
+        Assert.Equal("Document 2", secondGroup.IndexField);
+        Assert.NotNull(duplicateError);
+
+        Assert.True(documentManager.TryRenameGroup(secondGroup, "Invoices", out var validError));
+        Assert.Null(validError);
+        Assert.Equal("Invoices", secondGroup.IndexField);
+        Assert.Equal("Document 1", firstGroup.IndexField);
+    }
+
+    [Fact]
+    public void MoveImagesToGroup_RemovesTheEmptiedSourceGroup()
+    {
+        var imageList = new UiImageList();
+        var documentManager = new DocumentManager(imageList);
+        var firstGroup = documentManager.Groups.Single();
+        var secondGroup = documentManager.AddGroup("Document 2");
+        var image = CreateImage(firstGroup);
+        AddImages(imageList, image);
+
+        documentManager.MoveImagesToGroup(new[] { image }, secondGroup);
+
+        Assert.Equal(secondGroup.Id, image.DocumentGroupId);
+        Assert.Equal(new[] { secondGroup }, documentManager.Groups);
+    }
+
     private UiImage CreateImage(DocumentGroup group)
     {
         return new UiImage(ScanningContext.CreateProcessedImage(Substitute.For<IImageStorage>()))

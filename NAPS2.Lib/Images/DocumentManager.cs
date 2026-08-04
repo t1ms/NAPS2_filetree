@@ -18,13 +18,13 @@ public class DocumentManager
         _imageList.ImagesUpdated += ImageList_ImagesUpdated;
         
         // Start with a default group
-        AddGroup("Document 1");
+        AddGroup(GetNextDefaultName());
     }
 
     private void ImageList_ImagesUpdated(object? sender, ImageListEventArgs e)
     {
         bool changed = false;
-        var activeGroup = Groups.LastOrDefault() ?? AddGroup("Document 1");
+        var activeGroup = Groups.LastOrDefault() ?? AddGroup(GetNextDefaultName());
 
         foreach (var image in _imageList.Images)
         {
@@ -52,10 +52,52 @@ public class DocumentManager
 
     public DocumentGroup AddGroup(string indexField)
     {
-        var group = new DocumentGroup(indexField);
+        var group = new DocumentGroup(string.IsNullOrWhiteSpace(indexField) ? GetNextDefaultName() : indexField.Trim());
         Groups.Add(group);
         GroupsChanged?.Invoke(this, EventArgs.Empty);
         return group;
+    }
+
+    public bool TryRenameGroup(DocumentGroup group, string? name, out string? errorMessage)
+    {
+        errorMessage = null;
+        if (!Groups.Contains(group))
+        {
+            errorMessage = "This document no longer exists.";
+            return false;
+        }
+
+        name = name?.Trim();
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            errorMessage = "Enter a document name.";
+            return false;
+        }
+        if (Groups.Any(g => g != group && g.IndexField.Equals(name, StringComparison.OrdinalIgnoreCase)))
+        {
+            errorMessage = $"A document named \"{name}\" already exists. Choose a different name.";
+            return false;
+        }
+
+        group.IndexField = name;
+        GroupsChanged?.Invoke(this, EventArgs.Empty);
+        return true;
+    }
+
+    public void MoveImagesToGroup(IEnumerable<UiImage> images, DocumentGroup targetGroup)
+    {
+        if (!Groups.Contains(targetGroup))
+        {
+            return;
+        }
+
+        foreach (var image in images)
+        {
+            image.DocumentGroupId = targetGroup.Id;
+            image.InvalidateThumbnail();
+        }
+        RemoveEmptyGroups();
+        GroupsChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public DocumentGroup? SplitAtImage(UiImage splitImage)
@@ -68,9 +110,7 @@ public class DocumentManager
         var originalGroup = Groups.FirstOrDefault(g => g.Id == originalGroupId);
         if (originalGroup == null) return null;
 
-        // Determine a new name
-        string newName = "Document " + (Groups.Count + 1);
-        var newGroup = new DocumentGroup(newName);
+        var newGroup = new DocumentGroup(GetNextDefaultName());
         
         // Insert it right after the original group
         int groupIndex = Groups.IndexOf(originalGroup);
@@ -131,10 +171,35 @@ public class DocumentManager
         // If an image-list update occurred, its normal group cleanup has already run.
         if (!Groups.Any())
         {
-            AddGroup("Document 1");
+            AddGroup(GetNextDefaultName());
         }
         // Notify after the image mutation finishes so the tree refreshes only once,
         // with the final group list.
         GroupsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private string GetNextDefaultName()
+    {
+        int number = 1;
+        while (Groups.Any(group => group.IndexField.Equals($"Document {number}", StringComparison.OrdinalIgnoreCase)))
+        {
+            number++;
+        }
+        return $"Document {number}";
+    }
+
+    private void RemoveEmptyGroups()
+    {
+        var emptyGroups = Groups
+            .Where(group => !_imageList.Images.Any(image => image.DocumentGroupId == group.Id))
+            .ToList();
+        foreach (var group in emptyGroups)
+        {
+            Groups.Remove(group);
+        }
+        if (!Groups.Any())
+        {
+            AddGroup(GetNextDefaultName());
+        }
     }
 }

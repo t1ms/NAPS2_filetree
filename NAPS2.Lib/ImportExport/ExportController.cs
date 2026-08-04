@@ -91,19 +91,33 @@ public class ExportController : IExportController
         }
 
         var dir = folderPath;
+        var groupsToSave = _documentManager.Groups
+            .Select(group => new
+            {
+                Group = group,
+                Images = source.Where(image => image.DocumentGroupId == group.Id).ToList(),
+                FileName = (string.IsNullOrWhiteSpace(group.IndexField) ? "Document" : group.IndexField) + ".pdf"
+            })
+            .Where(item => item.Images.Any())
+            .ToList();
+        var duplicateOutputName = groupsToSave
+            .GroupBy(item => item.FileName, StringComparer.OrdinalIgnoreCase)
+            .FirstOrDefault(group => group.Count() > 1);
+        if (duplicateOutputName != null)
+        {
+            return false;
+        }
+
         bool anySaved = false;
 
-        foreach (var group in _documentManager.Groups)
+        foreach (var item in groupsToSave)
         {
-            var uiImages = source.Where(i => i.DocumentGroupId == group.Id).ToList();
-            if (!uiImages.Any()) continue;
-
-            using var images = GetSnapshots(uiImages);
-            string savePath = Path.Combine(dir, (string.IsNullOrWhiteSpace(group.IndexField) ? "Document" : group.IndexField) + ".pdf");
+            using var images = GetSnapshots(item.Images);
+            string savePath = Path.Combine(dir, item.FileName);
 
             if (await DoSavePdf(images, notify, savePath))
             {
-                MaybeDeleteAfterSaving(uiImages);
+                MaybeDeleteAfterSaving(item.Images);
                 anySaved = true;
             }
         }
