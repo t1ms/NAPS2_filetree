@@ -88,25 +88,26 @@ public abstract class ImageFormBase : EtoDialogBase
     private void UpdateImageCoords()
     {
         if (!Overlay.Loaded) return;
-        var widthRatio = DisplayImageWidth / (float) (Overlay.Width - OverlayBorderSize * 2);
-        var heightRatio = DisplayImageHeight / (float) (Overlay.Height - OverlayBorderSize * 2);
-        var ratio = widthRatio / heightRatio;
-        if (ratio > 1)
+        var availableWidth = Overlay.Width - OverlayBorderSize * 2;
+        var availableHeight = Overlay.Height - OverlayBorderSize * 2;
+        if (availableWidth <= 0 || availableHeight <= 0 || DisplayImageWidth <= 0 || DisplayImageHeight <= 0)
         {
-            _overlayL = OverlayBorderSize;
-            _overlayR = Overlay.Width - OverlayBorderSize * 2;
-            var empty = Overlay.Height - Overlay.Height / ratio;
-            _overlayT = empty / 2 + OverlayBorderSize;
-            _overlayB = Overlay.Height - empty / 2 - OverlayBorderSize * 2;
+            _overlayL = _overlayT = _overlayR = _overlayB = _overlayW = _overlayH = 0;
+            return;
         }
-        else
-        {
-            _overlayT = OverlayBorderSize;
-            _overlayB = Overlay.Height - OverlayBorderSize * 2;
-            var empty = Overlay.Width - Overlay.Width * ratio;
-            _overlayL = empty / 2 + OverlayBorderSize;
-            _overlayR = Overlay.Width - empty / 2 - OverlayBorderSize * 2;
-        }
+
+        // Fit the image into the available area while keeping the same inset on all
+        // sides. The old calculation mixed border widths and produced an asymmetric
+        // right/bottom edge, which was especially visible in the split editor.
+        var scale = Math.Min(
+            availableWidth / (float) DisplayImageWidth,
+            availableHeight / (float) DisplayImageHeight);
+        var imageWidth = DisplayImageWidth * scale;
+        var imageHeight = DisplayImageHeight * scale;
+        _overlayL = OverlayBorderSize + (availableWidth - imageWidth) / 2;
+        _overlayT = OverlayBorderSize + (availableHeight - imageHeight) / 2;
+        _overlayR = _overlayL + imageWidth;
+        _overlayB = _overlayT + imageHeight;
         _overlayW = _overlayR - _overlayL;
         _overlayH = _overlayB - _overlayT;
         Overlay.Invalidate();
@@ -114,6 +115,10 @@ public abstract class ImageFormBase : EtoDialogBase
 
     protected virtual void PaintOverlay(object? sender, PaintEventArgs e)
     {
+        if (DisplayImage == null || _overlayW <= 0 || _overlayH <= 0)
+        {
+            return;
+        }
         using var etoImage = DisplayImage!.ToEtoImage();
         e.Graphics.DrawImage(etoImage, _overlayL, _overlayT, _overlayW, _overlayH);
     }

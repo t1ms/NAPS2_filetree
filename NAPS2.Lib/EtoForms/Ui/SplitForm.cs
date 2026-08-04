@@ -121,6 +121,10 @@ public class SplitForm : UnaryImageFormBase
 
     private void Overlay_MouseDown(object? sender, MouseEventArgs e)
     {
+        if (_overlayW <= 0 || _overlayH <= 0 || RealImageWidth <= 1 || RealImageHeight <= 1)
+        {
+            return;
+        }
         _dragging = IsHandleUnderMouse(e);
         _mouseOrigin = e.Location;
         Overlay.Invalidate();
@@ -128,6 +132,10 @@ public class SplitForm : UnaryImageFormBase
 
     private void Overlay_MouseUp(object? sender, MouseEventArgs e)
     {
+        if (!_dragging && (_overlayW <= 0 || _overlayH <= 0))
+        {
+            return;
+        }
         _realX = _cropX * RealImageWidth;
         _realY = _cropY * RealImageHeight;
         _dragging = false;
@@ -206,6 +214,10 @@ public class SplitForm : UnaryImageFormBase
 
     private void UpdateCrop(PointF mousePos)
     {
+        if (_overlayW <= 0 || _overlayH <= 0 || RealImageWidth <= 1 || RealImageHeight <= 1)
+        {
+            return;
+        }
         var delta = mousePos - _mouseOrigin;
         if (_orientation == SplitOrientation.Vertical)
         {
