@@ -1,0 +1,56 @@
+This is a live npm supply-chain attack (Shai-Hulud variant) that started today (4 Aug 2026). Attackers compromised the GitHub account of the keyv maintainer, published malicious versions of keyv and related packages (cacheable, flat-cache, file-entry-cache, cache-manager, etc.), and the worm is spreading to hundreds more packages (reports of 800+ packages / 1300+ versions, billions of monthly installs).
+
+What the malware does
+Runs via a preinstall script (setup.mjs) that drops a stealer (Math_Symbol.js).
+Harvests secrets: npm tokens, GitHub tokens/credentials, AWS, Kubernetes, Vault, CI/CD secrets, SSH keys, crypto wallets, AI configs, etc.
+Exfiltrates them (often via GitHub repos under compromised accounts with descriptions like “Shai-Hulud: Here We Go Again”).
+Self-propagates by using stolen npm tokens to publish more malicious packages.
+
+Because you have a GitHub account (and likely use Node/npm), treat this seriously—especially if you have ever run npm install recently, publish packages, or use GitHub Actions/CI.
+
+Immediate actions
+
+Check if you are affected
+   Search your projects for the known bad packages/versions (start with keyv@6.0.0 and the related cacheable family published today; the list is growing fast).
+   Look in package-lock.json / yarn.lock / pnpm-lock.yaml, node_modules, and CI logs.
+   Useful commands:
+          npm ls keyv cacheable flat-cache file-entry-cache 2>/dev/null
+     grep -r "keyv.*6\.0\.0\|setup\.mjs\|Math_Symbol" package-lock.json node_modules 2>/dev/null
+        Check for unexpected Bun runtime or files named setup.mjs / Math_Symbol.js.
+
+If you installed any compromised version (or are unsure)
+   Rotate everything immediately:
+     All GitHub personal access tokens, fine-grained tokens, SSH keys, deploy keys, and org tokens.
+     npm tokens / publish tokens.
+     AWS, GCP, Azure, Kubernetes, Vault, Terraform, and any other cloud/infra credentials that were on the machine or in CI.
+     Any other secrets the machine could reach.
+   Revoke sessions on GitHub (Settings → Sessions / Applications).
+   Enable/force 2FA + hardware keys if not already.
+   Wipe or thoroughly clean the affected machine(s) and rebuild from clean sources. Do not just delete node_modules.
+   Review recent GitHub activity, new repos, or suspicious commits/releases under your account.
+   Check for new public GitHub repos created by your account with the “Shai-Hulud” description.
+
+Protect your GitHub account right now
+   Enable 2FA (preferably hardware security key / passkey).
+   Review and revoke unused tokens, OAuth apps, and GitHub Apps.
+   Use fine-grained PATs with minimal scopes and short lifetimes.
+   Enable secret scanning and push protection on your repos/org.
+   Consider requiring signed commits and branch protection.
+
+Hardening for the future (do these regardless)
+   Always use lockfiles and prefer npm ci --ignore-scripts (or equivalent) in CI.
+   Newer npm (v12+) disables lifecycle scripts by default—upgrade if possible.
+   Set a minimum release age / cooldown (e.g. min-release-age in .npmrc) so brand-new packages can’t be installed immediately.
+   Pin exact versions; avoid floating ranges for critical deps.
+   Use tools that scan for malicious packages (Socket, Aikido, Wiz, JFrog, Datadog SCFW, etc.).
+   Never store long-lived secrets on developer machines or in plain CI environments.
+   Monitor for unexpected package publishes under your npm account.
+
+Sources for the latest status
+Aikido write-up: https://www.aikido.dev/blog/keyv-and-friends-compromised-in-npm-supply-chain-attack
+Wiz: https://www.wiz.io/blog/keyv-and-cacheable-npm-supply-chain-attack
+Socket / JFrog / Datadog also have tracking pages (lists are still updating).
+
+This is still actively spreading. Check the latest posts from the security researchers linked in the original tweet and the blogs above for the growing list of affected packages.
+
+If you tell me more about your setup (do you publish npm packages? Use GitHub Actions? Have any of the big caching packages as direct/transitive deps?), I can give more targeted steps. Stay safe and rotate aggressively if there’s any chance of exposure.
