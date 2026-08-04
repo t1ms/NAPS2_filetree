@@ -1,5 +1,6 @@
 using NAPS2.Ocr;
 using NAPS2.Sdk.Tests;
+using NSubstitute;
 using System.Threading;
 using System.Collections.Immutable;
 using Xunit;
@@ -290,6 +291,65 @@ public class ZonalOcrServiceTests : ContextualTests
         Assert.Equal(2, result.Fields.Count);
         Assert.Equal("", result.Fields[0].Value);
         Assert.Equal("725272730706", result.Fields[1].Value);
+    }
+
+    [Fact]
+    public async Task FailingZoneSetsExtractionErrorAndContinuesToNextZone()
+    {
+        // The OCR engine throws for the first (text) zone. The pipeline must:
+        //   (a) set ExtractionError on that field instead of silently leaving it blank, and
+        //   (b) still decode the second (barcode) zone successfully.
+        var config = Naps2Config.Stub();
+        var ocrMock = Substitute.For<IOcrEngine>();
+        ocrMock.ProcessImage(ScanningContext, Arg.Any<string>(), Arg.Any<OcrParams>(), Arg.Any<CancellationToken>())
+            .Returns<Task<OcrResult?>>(_ => throw new InvalidOperationException("simulated engine crash"));
+        ScanningContext.OcrEngine = ocrMock;
+
+        var service = new ZonalOcrService(ScanningContext, config, new ZonalOcrResultsStore(),
+            new LlmFieldNormalizer(config));
+        using var image = ScanningContext.CreateProcessedImage(LoadImage(ImageResources.image_upc_barcode));
+        var template = new OcrZoneTemplate
+        {
+            Name = "Mixed",
+            Zones =
+            [
+                new OcrZone
+                {
+                    Name = "TextZone",
+                    Left = 0,
+                    Top = 0,
+                    Width = 1,
+                    Height = 1,
+                    ExtractionMode = OcrZoneExtractionMode.Text
+                },
+                new OcrZone
+                {
+                    Name = "BarcodeZone",
+                    Left = 0,
+                    Top = 0,
+                    Width = 1,
+                    Height = 1,
+                    ExtractionMode = OcrZoneExtractionMode.Barcode,
+                    BarcodeFormat = OcrZoneBarcodeFormat.UpcA
+                }
+            ]
+        };
+
+        var result = await service.ExtractFields(image, template, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Fields.Count);
+
+        var textField = result.Fields[0];
+        Assert.Equal("TextZone", textField.Name);
+        Assert.Equal("", textField.Value);
+        Assert.NotNull(textField.ExtractionError);
+        Assert.Contains("simulated engine crash", textField.ExtractionError);
+
+        var barcodeField = result.Fields[1];
+        Assert.Equal("BarcodeZone", barcodeField.Name);
+        Assert.Equal("725272730706", barcodeField.Value);
+        Assert.Null(barcodeField.ExtractionError);
     }
 
     [Fact]

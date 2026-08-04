@@ -100,6 +100,7 @@ public class ZonalOcrService
         {
             cancelToken.ThrowIfCancellationRequested();
             string value = "";
+            string? extractionError = null;
             int zx = (int) Math.Round(zone.Left.Clamp(0, 1) * w);
             int zy = (int) Math.Round(zone.Top.Clamp(0, 1) * h);
             int zw = (int) Math.Round(zone.Width.Clamp(0, 1) * w);
@@ -154,6 +155,7 @@ public class ZonalOcrService
                 catch (Exception ex)
                 {
                     Log.ErrorException($"Zonal OCR failed for zone \"{zone.Name}\"", ex);
+                    extractionError = ex.Message;
                 }
                 finally
                 {
@@ -167,7 +169,7 @@ public class ZonalOcrService
                     }
                 }
             }
-            fields.Add(new ZonalOcrField(zone.Name, value));
+            fields.Add(new ZonalOcrField(zone.Name, value) { ExtractionError = extractionError });
         }
         var notice = await MaybeNormalizeWithLlm(template, fields, cancelToken);
         return new ZonalOcrResult

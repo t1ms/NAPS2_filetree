@@ -37,14 +37,23 @@ public class ZonalOcrResultsForm : EtoDialogBase
         _grid.Columns.Add(new GridColumn
         {
             HeaderText = "Value",
-            DataCell = new TextBoxCell { Binding = Binding.Property<Entry, string>(x => x.Value) },
+            DataCell = new TextBoxCell { Binding = Binding.Property<Entry, string>(x => x.DisplayValue) },
             Width = 300
         });
 
         _store.ResultsUpdated += Store_ResultsUpdated;
     }
 
-    private record Entry(string Page, string Field, string Value);
+    private record Entry(string Page, string Field, string Value, string? ExtractionError)
+    {
+        /// <summary>
+        /// Value shown in the grid cell. When extraction failed the cell shows a
+        /// "⚠ Extraction error" prefix so users can distinguish a blank from a crash.
+        /// </summary>
+        public string DisplayValue => ExtractionError != null
+            ? $"⚠ Extraction error: {ExtractionError}"
+            : Value;
+    }
 
     protected override void BuildLayout()
     {
@@ -91,7 +100,7 @@ public class ZonalOcrResultsForm : EtoDialogBase
         {
             foreach (var field in result.Fields)
             {
-                entries.Add(new Entry(result.PageNumber.ToString(), field.Name, field.Value));
+                entries.Add(new Entry(result.PageNumber.ToString(), field.Name, field.Value, field.ExtractionError));
             }
             if (!string.IsNullOrEmpty(result.Notice))
             {

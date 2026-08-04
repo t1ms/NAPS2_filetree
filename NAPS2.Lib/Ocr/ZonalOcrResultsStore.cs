@@ -1,6 +1,13 @@
 namespace NAPS2.Ocr;
 
-public record ZonalOcrField(string Name, string Value);
+public record ZonalOcrField(string Name, string Value)
+{
+    /// <summary>
+    /// Set when zone extraction threw an exception. The user sees an empty value
+    /// because extraction failed, not because the zone genuinely contained nothing.
+    /// </summary>
+    public string? ExtractionError { get; init; }
+}
 
 public class ZonalOcrResult
 {
