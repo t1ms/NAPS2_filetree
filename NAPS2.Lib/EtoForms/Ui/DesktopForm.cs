@@ -653,10 +653,24 @@ public abstract class DesktopForm : EtoFormBase
         {
             return;
         }
-        if (position != -1)
+        if (ShouldMoveDraggedImages(position, ImageList.Selection.Count,
+                () => ConfirmDragMove(ImageList.Selection.Count)))
         {
             _imageListActions.MoveTo(position);
         }
+    }
+
+    internal static bool ShouldMoveDraggedImages(int position, int imageCount, Func<bool> confirm)
+    {
+        return imageCount > 0 && position != -1 && confirm();
+    }
+
+    protected virtual bool ConfirmDragMove(int imageCount)
+    {
+        return MessageBox.Show(this,
+                string.Format(MiscResources.ConfirmMoveItems, imageCount),
+                MiscResources.Move, MessageBoxButtons.OKCancel,
+                MessageBoxType.Question, MessageBoxDefaultButton.OK) == DialogResult.Ok;
     }
 
     public void ToggleSidebar()

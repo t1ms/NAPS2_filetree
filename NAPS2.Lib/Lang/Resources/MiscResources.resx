@@ -129,6 +129,9 @@
   <data name="ConfirmDeleteItems" xml:space="preserve">
     <value>Are you sure you want to delete {0} item(s)?</value>
   </data>
+  <data name="ConfirmMoveItems" xml:space="preserve">
+    <value>Are you sure you want to move {0} selected image(s)?</value>
+  </data>
   <data name="ConfirmDeleteMultipleProfiles" xml:space="preserve">
     <value>Are you sure you want to delete {0} profiles?</value>
   </data>
@@ -182,6 +185,9 @@
   </data>
   <data name="NameMissing" xml:space="preserve">
     <value>Name missing.</value>
+  </data>
+  <data name="Move" xml:space="preserve">
+    <value>Move Images</value>
   </data>
   <data name="NAPS2" xml:space="preserve">
     <value>NAPS2</value>

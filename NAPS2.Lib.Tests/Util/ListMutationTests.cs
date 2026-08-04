@@ -72,6 +72,22 @@ public class ListMutationTests
         Assert.Equal(list, new[] { "a", "d", "b", "c" });
         CollectionAsserts.SameItems(sel, new[] { "a", "d" });
     }
-        
-    // TODO: More
+
+    [Fact]
+    public void MoveTo()
+    {
+        var m = new ListMutation<string>.MoveTo(4);
+        var list = new List<string> { "a", "b", "c", "d", "e" };
+        var sel = ListSelection.Of("b", "c");
+
+        m.Apply(list, ref sel);
+
+        Assert.Equal(new[] { "a", "d", "b", "c", "e" }, list);
+        CollectionAsserts.SameItems(sel, new[] { "b", "c" });
+
+        // Moving the selection to its current position is a no-op.
+        m.Apply(list, ref sel);
+        Assert.Equal(new[] { "a", "d", "b", "c", "e" }, list);
+        CollectionAsserts.SameItems(sel, new[] { "b", "c" });
+    }
 }

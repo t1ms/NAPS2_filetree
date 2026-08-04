@@ -292,6 +292,15 @@ namespace NAPS2.Lang.Resources {
                 return ResourceManager.GetString("ConfirmDeleteItems", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Are you sure you want to move {0} selected image(s)?.
+        /// </summary>
+        internal static string ConfirmMoveItems {
+            get {
+                return ResourceManager.GetString("ConfirmMoveItems", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to Are you sure you want to delete {0} profiles?.
@@ -812,6 +821,15 @@ namespace NAPS2.Lang.Resources {
         internal static string NameMissing {
             get {
                 return ResourceManager.GetString("NameMissing", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Move Images.
+        /// </summary>
+        internal static string Move {
+            get {
+                return ResourceManager.GetString("Move", resourceCulture);
             }
         }
         
