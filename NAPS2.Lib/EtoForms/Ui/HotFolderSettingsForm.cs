@@ -74,47 +74,89 @@ public class HotFolderSettingsForm : EtoDialogBase
 
     private void BrowseWatchFolder()
     {
-        var dialog = new SelectFolderDialog();
+        var dialog = CreateFolderDialog(_watchFolder.Text);
         if (dialog.ShowDialog(this) == DialogResult.Ok)
         {
-            _watchFolder.Text = dialog.Directory;
+            if (HotFolderService.TryGetExistingDirectory(dialog.Directory, out var path))
+            {
+                _watchFolder.Text = path;
+            }
         }
     }
 
     private void BrowseDestinationFolder()
     {
-        var dialog = new SelectFolderDialog();
+        var dialog = CreateFolderDialog(_destinationFolder.Text);
         if (dialog.ShowDialog(this) == DialogResult.Ok)
         {
-            _destinationFolder.Text = dialog.Directory;
+            if (HotFolderService.TryGetExistingDirectory(dialog.Directory, out var path))
+            {
+                _destinationFolder.Text = path;
+            }
         }
+    }
+
+    private static SelectFolderDialog CreateFolderDialog(string? currentPath)
+    {
+        var dialog = new SelectFolderDialog();
+        if (HotFolderService.TryGetExistingDirectory(currentPath, out var path))
+        {
+            dialog.Directory = path;
+        }
+        return dialog;
     }
 
     private bool Save()
     {
-        if (_enabled.IsChecked() &&
-            (string.IsNullOrWhiteSpace(_watchFolder.Text) || string.IsNullOrWhiteSpace(_destinationFolder.Text) ||
-             string.IsNullOrWhiteSpace(_profile.SelectedKey)))
+        string? watchFolder = null;
+        string? destinationFolder = null;
+        if (_enabled.IsChecked())
         {
-            MessageBox.Show(this, "Choose a watch folder, destination folder, and a profile with Auto Save configured.",
-                MessageBoxType.Warning);
-            return false;
+            if (!HotFolderService.TryGetExistingDirectory(_watchFolder.Text, out var normalizedWatchFolder))
+            {
+                MessageBox.Show(this, "Choose an existing, accessible watch folder.", MessageBoxType.Warning);
+                return false;
+            }
+            if (!HotFolderService.TryGetExistingDirectory(_destinationFolder.Text, out var normalizedDestinationFolder))
+            {
+                MessageBox.Show(this, "Choose an existing, accessible destination folder.", MessageBoxType.Warning);
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(_profile.SelectedKey))
+            {
+                MessageBox.Show(this, "Choose a profile with Auto Save configured.", MessageBoxType.Warning);
+                return false;
+            }
+            watchFolder = normalizedWatchFolder;
+            destinationFolder = normalizedDestinationFolder;
         }
-        if (!string.IsNullOrWhiteSpace(_watchFolder.Text) &&
-            !string.IsNullOrWhiteSpace(_destinationFolder.Text) &&
-            HotFolderService.IsPathInsideOrEqual(_destinationFolder.Text, _watchFolder.Text))
+        else
+        {
+            watchFolder = HotFolderService.NormalizeConfiguredPath(_watchFolder.Text) ?? "";
+            destinationFolder = HotFolderService.NormalizeConfiguredPath(_destinationFolder.Text) ?? "";
+        }
+
+        if (watchFolder.Length > 0 && destinationFolder.Length > 0 &&
+            HotFolderService.IsPathInsideOrEqual(destinationFolder, watchFolder))
         {
             MessageBox.Show(this, "The destination folder must be outside the watch folder.",
                 MessageBoxType.Warning);
             return false;
         }
+
         var transaction = Config.User.BeginTransaction();
         transaction.Set(c => c.EnableHotFolder, _enabled.IsChecked());
-        transaction.Set(c => c.HotFolderPath, _watchFolder.Text);
-        transaction.Set(c => c.HotFolderDestinationPath, _destinationFolder.Text);
+        transaction.Set(c => c.HotFolderPath, watchFolder);
+        transaction.Set(c => c.HotFolderDestinationPath, destinationFolder);
         transaction.Set(c => c.HotFolderProfileName, _profile.SelectedKey);
         transaction.Commit();
         _hotFolderService.Start();
+        if (_enabled.IsChecked() && !_hotFolderService.IsActive)
+        {
+            Config.User.Set(c => c.EnableHotFolder, false);
+            MessageBox.Show(this, _hotFolderService.StatusText, MessageBoxType.Warning);
+            return false;
+        }
         return true;
     }
 

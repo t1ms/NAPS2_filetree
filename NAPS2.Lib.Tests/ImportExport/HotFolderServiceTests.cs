@@ -43,4 +43,28 @@ public class HotFolderServiceTests
     {
         Assert.False(HotFolderService.IsPathInsideOrEqual(destination, watchFolder));
     }
+
+    [Fact]
+    public void NormalizesFileUriToExistingDirectory()
+    {
+        var path = Path.Combine(Path.GetTempPath(), "naps2-hot-folder-test");
+        Directory.CreateDirectory(path);
+        try
+        {
+            var uri = new Uri(path).AbsoluteUri;
+            Assert.True(HotFolderService.TryGetExistingDirectory(uri, out var normalized));
+            Assert.Equal(Path.GetFullPath(path), normalized);
+        }
+        finally
+        {
+            Directory.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void RejectsMissingConfiguredDirectory()
+    {
+        Assert.False(HotFolderService.TryGetExistingDirectory(
+            Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString()), out _));
+    }
 }

@@ -75,39 +75,53 @@ public class HotFolderService : IHotFolderService, IDisposable
                 return;
             }
             var folder = _config.Get(c => c.HotFolderPath);
-            if (string.IsNullOrWhiteSpace(folder) || !Directory.Exists(folder))
+            if (!TryGetExistingDirectory(folder, out var normalizedWatchFolder))
             {
                 UpdateStatus("Hot folder is unavailable");
                 return;
             }
-            _watchFolder = Path.GetFullPath(folder);
+            _watchFolder = normalizedWatchFolder;
             var destination = _config.Get(c => c.HotFolderDestinationPath);
-            if (string.IsNullOrWhiteSpace(destination) || IsPathInsideOrEqual(destination, _watchFolder))
+            if (!TryGetExistingDirectory(destination, out var normalizedDestinationFolder))
+            {
+                _watchFolder = null;
+                UpdateStatus("Hot folder destination is unavailable");
+                return;
+            }
+            if (IsPathInsideOrEqual(normalizedDestinationFolder, _watchFolder))
             {
                 _watchFolder = null;
                 UpdateStatus("Hot folder destination must be outside the watched folder");
                 return;
             }
-            _destinationFolder = Path.GetFullPath(destination);
-            _cancellation = new CancellationTokenSource();
-            _watcher = new FileSystemWatcher(_watchFolder)
+            _destinationFolder = normalizedDestinationFolder;
+            try
             {
-                IncludeSubdirectories = false,
-                Filter = "*.*",
-                NotifyFilter = NotifyFilters.FileName | NotifyFilters.Size | NotifyFilters.LastWrite,
-                EnableRaisingEvents = true
-            };
-            _watcher.Created += WatcherOnFileAppeared;
-            _watcher.Changed += WatcherOnFileAppeared;
-            _watcher.Renamed += WatcherOnRenamed;
-            _processorTask = Task.Run(() => ProcessQueue(_cancellation.Token));
-            IsActive = true;
-            UpdateStatus("Hot folder active (0 processed, 0 failed)");
+                _cancellation = new CancellationTokenSource();
+                _watcher = new FileSystemWatcher(_watchFolder)
+                {
+                    IncludeSubdirectories = false,
+                    Filter = "*.*",
+                    NotifyFilter = NotifyFilters.FileName | NotifyFilters.Size | NotifyFilters.LastWrite,
+                    EnableRaisingEvents = true
+                };
+                _watcher.Created += WatcherOnFileAppeared;
+                _watcher.Changed += WatcherOnFileAppeared;
+                _watcher.Renamed += WatcherOnRenamed;
+                _processorTask = Task.Run(() => ProcessQueue(_cancellation.Token));
+                IsActive = true;
+                UpdateStatus("Hot folder active (0 processed, 0 failed)");
 
-            // Process files already present when NAPS2 starts, which is useful after a restart.
-            foreach (var path in Directory.EnumerateFiles(_watchFolder))
+                // Process files already present when NAPS2 starts, which is useful after a restart.
+                foreach (var path in Directory.EnumerateFiles(_watchFolder))
+                {
+                    EnqueueIfSupported(path);
+                }
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
             {
-                EnqueueIfSupported(path);
+                StopInternal();
+                UpdateStatus($"Hot folder could not start: {ex.Message}");
             }
         }
     }
@@ -183,6 +197,35 @@ public class HotFolderService : IHotFolderService, IDisposable
         string fullParent = NormalizePathForComparison(possibleParent);
         return fullPath.Equals(fullParent, StringComparison.OrdinalIgnoreCase) ||
                fullPath.StartsWith(fullParent + "/", StringComparison.OrdinalIgnoreCase);
+    }
+
+    internal static string? NormalizeConfiguredPath(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return null;
+        }
+
+        path = path.Trim();
+        if (Uri.TryCreate(path, UriKind.Absolute, out var uri) && uri.IsFile)
+        {
+            path = uri.LocalPath;
+        }
+
+        try
+        {
+            return Path.GetFullPath(path);
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    internal static bool TryGetExistingDirectory(string? path, out string normalizedPath)
+    {
+        normalizedPath = NormalizeConfiguredPath(path) ?? "";
+        return normalizedPath.Length > 0 && Directory.Exists(normalizedPath);
     }
 
     private static string NormalizePathForComparison(string path)
