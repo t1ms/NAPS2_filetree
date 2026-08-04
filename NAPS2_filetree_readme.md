@@ -101,13 +101,19 @@ total in a consistent document layout.
 
 7. Add more zones as needed.
 8. Give the template a name.
-9. Leave this enabled if the template should run automatically:
+9. For each selected zone, choose **Printed text** for normal OCR or **Barcode**
+   and select a barcode format. Use **Any format** when the barcode type is not
+   known. Barcode values use the same field results, CSV, and filename
+   placeholders as OCR text.
+10. Leave this enabled if the template should run automatically:
 
    ```text
    Use this template for scans (extract fields from each scanned page)
    ```
 
-10. Click **Save**.
+11. Click **Save**. The dialog explains what to fix if the template name or a
+   field name is missing, names are duplicated, or a drawn rectangle is not
+   usable. Renaming a field is saved when you save the template.
 
 Zones are stored as page-relative positions, so the same template can be used
 on pages with different resolutions.

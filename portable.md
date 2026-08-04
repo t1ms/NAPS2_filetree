@@ -88,6 +88,11 @@ $(VENDOR)_$(INVOICE_NUMBER).pdf
 
 The older `{FieldName}` syntax is also supported.
 
+In the OCR Field Zones editor, select **Barcode** for a zone when the field is
+printed as a barcode, then choose its format (or **Any format**). Barcode values
+appear in the same extracted-field results and CSV output as OCR values, and can
+be used in the same filename placeholders.
+
 Missing or unsafe values are replaced with safe fallback text, and existing files
 receive numeric collision suffixes.
 

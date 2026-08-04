@@ -1,5 +1,7 @@
 using System.Threading;
 using NAPS2.Scan;
+using ZXing;
+using ZXing.Common;
 
 namespace NAPS2.Ocr;
 
@@ -34,7 +36,8 @@ public class ZonalOcrService
         {
             return null;
         }
-        return _config.Get(c => c.OcrZoneTemplates).FirstOrDefault(t => t.Name == name);
+        return _config.Get(c => c.OcrZoneTemplates)
+            .FirstOrDefault(t => t.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>
@@ -65,7 +68,7 @@ public class ZonalOcrService
         CancellationToken cancelToken)
     {
         var engine = _scanningContext.OcrEngine;
-        if (engine == null)
+        if (template.Zones.Any(z => z.ExtractionMode == OcrZoneExtractionMode.Text) && engine == null)
         {
             Log.Error("Zonal OCR: no OCR engine is configured.");
             return null;
@@ -74,7 +77,7 @@ public class ZonalOcrService
         {
             return null;
         }
-        var ocrParams = GetOcrParams();
+        var ocrParams = engine == null ? OcrParams.Empty : GetOcrParams();
         await _extractionSemaphore.WaitAsync(cancelToken);
         try
         {
@@ -87,7 +90,7 @@ public class ZonalOcrService
     }
 
     private async Task<ZonalOcrResult?> ExtractFieldsInternal(ProcessedImage image, OcrZoneTemplate template,
-        IOcrEngine engine, OcrParams ocrParams, CancellationToken cancelToken)
+        IOcrEngine? engine, OcrParams ocrParams, CancellationToken cancelToken)
     {
         using var rendered = image.Render();
         int w = rendered.Width;
@@ -114,10 +117,28 @@ public class ZonalOcrService
                     {
                         zoneImage.Save(tempPath, ImageFileFormat.Png);
                     }
-                    var ocrResult = await engine.ProcessImage(_scanningContext, tempPath, ocrParams, cancelToken);
-                    if (ocrResult != null)
+                    if (zone.ExtractionMode == OcrZoneExtractionMode.Barcode)
                     {
-                        value = string.Join(" ", ocrResult.Lines.Select(l => l.Text.Trim())).Trim();
+                        using var barcodeImage = _scanningContext.ImageContext.Load(tempPath);
+                        var barcode = BarcodeDetector.Detect(barcodeImage, new BarcodeDetectionOptions
+                        {
+                            DetectBarcodes = true,
+                            ZXingOptions = new DecodingOptions
+                            {
+                                TryHarder = true,
+                                PossibleFormats = GetBarcodeFormats(zone.BarcodeFormat)
+                            }
+                        });
+                        value = barcode.DetectedText ?? "";
+                    }
+                    else
+                    {
+                        var ocrResult = await engine!.ProcessImage(
+                            _scanningContext, tempPath, ocrParams, cancelToken);
+                        if (ocrResult != null)
+                        {
+                            value = string.Join(" ", ocrResult.Lines.Select(l => l.Text.Trim())).Trim();
+                        }
                     }
                 }
                 catch (OperationCanceledException)
@@ -167,7 +188,8 @@ public class ZonalOcrService
         for (int i = 0; i < fields.Count && i < template.Zones.Count; i++)
         {
             var field = fields[i];
-            if (string.IsNullOrWhiteSpace(field.Value))
+            if (string.IsNullOrWhiteSpace(field.Value) ||
+                template.Zones[i].ExtractionMode == OcrZoneExtractionMode.Barcode)
             {
                 continue;
             }
@@ -181,6 +203,24 @@ public class ZonalOcrService
             fields[i] = field with { Value = cleaned };
         }
         return null;
+    }
+
+    private static IList<BarcodeFormat>? GetBarcodeFormats(OcrZoneBarcodeFormat format)
+    {
+        return format switch
+        {
+            OcrZoneBarcodeFormat.Any => null,
+            OcrZoneBarcodeFormat.Code128 => [BarcodeFormat.CODE_128],
+            OcrZoneBarcodeFormat.Code39 => [BarcodeFormat.CODE_39],
+            OcrZoneBarcodeFormat.Ean13 => [BarcodeFormat.EAN_13],
+            OcrZoneBarcodeFormat.Ean8 => [BarcodeFormat.EAN_8],
+            OcrZoneBarcodeFormat.UpcA => [BarcodeFormat.UPC_A],
+            OcrZoneBarcodeFormat.UpcE => [BarcodeFormat.UPC_E],
+            OcrZoneBarcodeFormat.QrCode => [BarcodeFormat.QR_CODE],
+            OcrZoneBarcodeFormat.DataMatrix => [BarcodeFormat.DATA_MATRIX],
+            OcrZoneBarcodeFormat.Pdf417 => [BarcodeFormat.PDF_417],
+            _ => null
+        };
     }
 
     private OcrParams GetOcrParams()

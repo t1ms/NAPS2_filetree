@@ -21,6 +21,9 @@ public class OcrZonesForm : ImageFormBase
     private readonly ListBox _zoneList = new() { Height = 120 };
     private readonly TextBox _zoneName = new();
     private readonly Button _deleteZone;
+    private readonly DropDown _zoneExtractionMode = new();
+    private readonly DropDown _barcodeFormat = new();
+    private readonly Label _validationMessage = new() { Text = "", Visible = false };
     private readonly CheckBox _useForScanning = new()
         { Text = "Use this template for scans (extract fields from each scanned page)", Checked = true };
     private readonly TextBox _zonePrompt = new();
@@ -32,6 +35,7 @@ public class OcrZonesForm : ImageFormBase
     private readonly List<EditableZone> _zones = new();
     private int _selectedZoneIndex = -1;
     private bool _syncing;
+    private string? _editingTemplateName;
 
     // Drag state (in overlay coordinates)
     private bool _dragging;
@@ -59,15 +63,37 @@ public class OcrZonesForm : ImageFormBase
         _zoneList.SelectedIndexChanged += ZoneList_SelectedIndexChanged;
         _zoneName.TextChanged += ZoneName_TextChanged;
         _zonePrompt.TextChanged += ZonePrompt_TextChanged;
+        _zoneExtractionMode.SelectedIndexChanged += ZoneExtractionMode_SelectedIndexChanged;
+        _barcodeFormat.SelectedIndexChanged += BarcodeFormat_SelectedIndexChanged;
     }
 
-    private record EditableZone(string Name, RectangleF Rect, string? LlmPrompt = null)
+    private record EditableZone(string Name, RectangleF Rect, string? LlmPrompt = null,
+        OcrZoneExtractionMode ExtractionMode = OcrZoneExtractionMode.Text,
+        OcrZoneBarcodeFormat BarcodeFormat = OcrZoneBarcodeFormat.Any)
     {
         // Rect coordinates are fractions of the image size (0-1)
     }
 
     protected override void BuildLayout()
     {
+        _zoneExtractionMode.Items.Add(new ListItem { Text = "Printed text", Key = "text" });
+        _zoneExtractionMode.Items.Add(new ListItem { Text = "Barcode", Key = "barcode" });
+        _barcodeFormat.Items.AddRange(Enum.GetValues<OcrZoneBarcodeFormat>()
+            .Select(x => new ListItem { Text = x switch
+            {
+                OcrZoneBarcodeFormat.Any => "Any format",
+                OcrZoneBarcodeFormat.Code128 => "Code 128",
+                OcrZoneBarcodeFormat.Code39 => "Code 39",
+                OcrZoneBarcodeFormat.Ean13 => "EAN-13",
+                OcrZoneBarcodeFormat.Ean8 => "EAN-8",
+                OcrZoneBarcodeFormat.UpcA => "UPC-A",
+                OcrZoneBarcodeFormat.UpcE => "UPC-E",
+                OcrZoneBarcodeFormat.QrCode => "QR Code",
+                OcrZoneBarcodeFormat.DataMatrix => "Data Matrix",
+                OcrZoneBarcodeFormat.Pdf417 => "PDF417",
+                _ => x.ToString()
+            }}));
+
         LayoutController.Content = L.Column(
             Overlay.Scale(),
             C.Label("Drag on the page to draw a field zone. Click a zone to select it, then rename or delete it."),
@@ -81,10 +107,17 @@ public class OcrZonesForm : ImageFormBase
                     C.Label("Zones"),
                     _zoneList.NaturalWidth(200),
                     L.Row(_zoneName.NaturalWidth(150), _deleteZone),
+                    C.Label("Extract as"),
+                    _zoneExtractionMode.NaturalWidth(180),
+                    C.Label("Barcode format"),
+                    _barcodeFormat.NaturalWidth(180),
                     C.Label("AI prompt for this zone (optional, {FieldType} = zone name)"),
                     _zonePrompt.NaturalWidth(360)
                 ).Scale()
             ),
+            C.Label("Renaming a field is saved together with the template."),
+            _validationMessage,
+            C.Label("Draw at least one usable zone, give every field a unique non-empty name, then click Save."),
             _llmEnabled,
             L.Row(_llmModelPicker, _llmModelLabel.Scale()),
             L.Row(
@@ -125,17 +158,19 @@ public class OcrZonesForm : ImageFormBase
         if (index >= 0 && index < templates.Count)
         {
             var template = templates[index];
+            _editingTemplateName = template.Name;
             _templateName.Text = template.Name;
             foreach (var zone in template.Zones)
             {
                 _zones.Add(new EditableZone(zone.Name,
                     new RectangleF((float) zone.Left, (float) zone.Top, (float) zone.Width, (float) zone.Height),
-                    zone.LlmPrompt));
+                    zone.LlmPrompt, zone.ExtractionMode, zone.BarcodeFormat));
             }
             _useForScanning.Checked = Config.Get(c => c.ActiveOcrZoneTemplateName) == template.Name;
         }
         else
         {
+            _editingTemplateName = null;
             _templateName.Text = "";
             _useForScanning.Checked = true;
         }
@@ -176,14 +211,18 @@ public class OcrZonesForm : ImageFormBase
 
     private bool SaveTemplate()
     {
+        _validationMessage.Text = "";
+        _validationMessage.Visible = false;
         var name = _templateName.Text.Trim();
         if (name.Length == 0)
         {
-            _templateName.Focus();
+            ShowValidation("Enter a template name before saving.", _templateName);
             return false;
         }
-        if (_zones.Count == 0)
+        var validation = ValidateZones();
+        if (validation != null)
         {
+            ShowValidation(validation.Value.Message, validation.Value.Control);
             return false;
         }
         var template = new OcrZoneTemplate
@@ -191,30 +230,96 @@ public class OcrZonesForm : ImageFormBase
             Name = name,
             Zones = _zones.Select(z => new OcrZone
             {
-                Name = z.Name,
+                Name = z.Name.Trim(),
                 Left = z.Rect.X,
                 Top = z.Rect.Y,
                 Width = z.Rect.Width,
                 Height = z.Rect.Height,
-                LlmPrompt = string.IsNullOrWhiteSpace(z.LlmPrompt) ? null : z.LlmPrompt
+                LlmPrompt = string.IsNullOrWhiteSpace(z.LlmPrompt) ? null : z.LlmPrompt.Trim(),
+                ExtractionMode = z.ExtractionMode,
+                BarcodeFormat = z.BarcodeFormat
             }).ToImmutableList()
         };
         var templates = Config.Get(c => c.OcrZoneTemplates);
-        var existingIndex = templates.FindIndex(t => t.Name == name);
+        var existingIndex = _editingTemplateName == null
+            ? -1
+            : templates.FindIndex(t => t.Name.Equals(_editingTemplateName, StringComparison.OrdinalIgnoreCase));
+        var conflictingIndex = templates.FindIndex(t =>
+            t.Name.Equals(name, StringComparison.OrdinalIgnoreCase) &&
+            !t.Name.Equals(_editingTemplateName, StringComparison.OrdinalIgnoreCase));
+        if (conflictingIndex != -1)
+        {
+            ShowValidation($"A template named \"{name}\" already exists. Choose a different name.", _templateName);
+            return false;
+        }
         templates = existingIndex == -1
             ? templates.Add(template)
             : templates.SetItem(existingIndex, template);
         Config.User.Set(c => c.OcrZoneTemplates, templates);
+        var activeName = Config.Get(c => c.ActiveOcrZoneTemplateName);
         if (_useForScanning.IsChecked())
         {
             Config.User.Set(c => c.ActiveOcrZoneTemplateName, name);
         }
-        else if (Config.Get(c => c.ActiveOcrZoneTemplateName) == name)
+        else if (activeName?.Equals(_editingTemplateName, StringComparison.OrdinalIgnoreCase) == true ||
+                 activeName?.Equals(name, StringComparison.OrdinalIgnoreCase) == true)
         {
             Config.User.Set(c => c.ActiveOcrZoneTemplateName, "");
         }
         Config.User.Set(c => c.EnableLlmFieldCleanup, _llmEnabled.IsChecked());
+        _editingTemplateName = name;
         return true;
+    }
+
+    private (string Message, Control Control)? ValidateZones()
+    {
+        if (_zones.Count == 0)
+        {
+            return ("Draw at least one usable zone before saving.", _zoneList);
+        }
+        var namedZones = _zones.Select((zone, index) => (zone, index, name: zone.Name.Trim())).ToList();
+        var unnamed = namedZones.FirstOrDefault(x => x.name.Length == 0);
+        if (unnamed.zone != null)
+        {
+            _selectedZoneIndex = unnamed.index;
+            UpdateZoneList();
+            return ("Every zone needs a non-empty field name.", _zoneName);
+        }
+        var duplicate = namedZones
+            .GroupBy(x => x.name, StringComparer.OrdinalIgnoreCase)
+            .FirstOrDefault(group => group.Count() > 1);
+        if (duplicate != null)
+        {
+            var duplicateZone = duplicate.First();
+            _selectedZoneIndex = duplicateZone.index;
+            UpdateZoneList();
+            return ($"Field name \"{duplicate.Key}\" is used more than once. Give each field a unique name.",
+                _zoneName);
+        }
+        var unusable = namedZones.FirstOrDefault(x => !IsUsableZone(x.zone.Rect));
+        if (unusable.zone != null)
+        {
+            _selectedZoneIndex = unusable.index;
+            UpdateZoneList();
+            return ($"The zone \"{unusable.name}\" is not usable. Draw a positive-size rectangle inside the page.",
+                _zoneList);
+        }
+        return null;
+    }
+
+    private static bool IsUsableZone(RectangleF rect)
+    {
+        return float.IsFinite(rect.X) && float.IsFinite(rect.Y) &&
+            float.IsFinite(rect.Width) && float.IsFinite(rect.Height) &&
+            rect.X >= 0 && rect.Y >= 0 && rect.Width > 0 && rect.Height > 0 &&
+            rect.X + rect.Width <= 1 && rect.Y + rect.Height <= 1;
+    }
+
+    private void ShowValidation(string message, Control focus)
+    {
+        _validationMessage.Text = message;
+        _validationMessage.Visible = true;
+        focus.Focus();
     }
 
     private void PickLlmModel()
@@ -260,6 +365,12 @@ public class OcrZonesForm : ImageFormBase
             _zoneList.SelectedIndex = _selectedZoneIndex;
             _zoneName.Text = _selectedZoneIndex != -1 ? _zones[_selectedZoneIndex].Name : "";
             _zonePrompt.Text = _selectedZoneIndex != -1 ? _zones[_selectedZoneIndex].LlmPrompt ?? "" : "";
+            _zoneExtractionMode.SelectedIndex = _selectedZoneIndex != -1
+                ? (int) _zones[_selectedZoneIndex].ExtractionMode : 0;
+            _barcodeFormat.SelectedIndex = _selectedZoneIndex != -1
+                ? (int) _zones[_selectedZoneIndex].BarcodeFormat : 0;
+            _barcodeFormat.Enabled = _selectedZoneIndex != -1 &&
+                _zones[_selectedZoneIndex].ExtractionMode == OcrZoneExtractionMode.Barcode;
         }
         finally
         {
@@ -274,6 +385,12 @@ public class OcrZonesForm : ImageFormBase
         _syncing = true;
         _zoneName.Text = _selectedZoneIndex != -1 ? _zones[_selectedZoneIndex].Name : "";
         _zonePrompt.Text = _selectedZoneIndex != -1 ? _zones[_selectedZoneIndex].LlmPrompt ?? "" : "";
+        _zoneExtractionMode.SelectedIndex = _selectedZoneIndex != -1
+            ? (int) _zones[_selectedZoneIndex].ExtractionMode : 0;
+        _barcodeFormat.SelectedIndex = _selectedZoneIndex != -1
+            ? (int) _zones[_selectedZoneIndex].BarcodeFormat : 0;
+        _barcodeFormat.Enabled = _selectedZoneIndex != -1 &&
+            _zones[_selectedZoneIndex].ExtractionMode == OcrZoneExtractionMode.Barcode;
         _syncing = false;
         Overlay.Invalidate();
     }
@@ -300,6 +417,23 @@ public class OcrZonesForm : ImageFormBase
     {
         if (_syncing || _selectedZoneIndex == -1) return;
         _zones[_selectedZoneIndex] = _zones[_selectedZoneIndex] with { LlmPrompt = _zonePrompt.Text };
+    }
+
+    private void ZoneExtractionMode_SelectedIndexChanged(object? sender, EventArgs e)
+    {
+        if (_syncing || _selectedZoneIndex == -1 || _zoneExtractionMode.SelectedIndex < 0) return;
+        var mode = (OcrZoneExtractionMode) _zoneExtractionMode.SelectedIndex;
+        _zones[_selectedZoneIndex] = _zones[_selectedZoneIndex] with { ExtractionMode = mode };
+        _barcodeFormat.Enabled = mode == OcrZoneExtractionMode.Barcode;
+    }
+
+    private void BarcodeFormat_SelectedIndexChanged(object? sender, EventArgs e)
+    {
+        if (_syncing || _selectedZoneIndex == -1 || _barcodeFormat.SelectedIndex < 0) return;
+        _zones[_selectedZoneIndex] = _zones[_selectedZoneIndex] with
+        {
+            BarcodeFormat = (OcrZoneBarcodeFormat) _barcodeFormat.SelectedIndex
+        };
     }
 
     private void DeleteSelectedZone()
