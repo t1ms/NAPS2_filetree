@@ -31,15 +31,24 @@ public class ImageListViewBehavior : ListViewBehavior<UiImage>
 
         if (item.DocumentGroupId != Guid.Empty)
         {
-            var bmp = new Bitmap(etoImage.Size, PixelFormat.Format32bppRgba);
-            using (var g = new Graphics(bmp))
+            try
             {
-                g.DrawImage(etoImage, 0, 0);
-                var color = GetColorForGroup(item.DocumentGroupId);
-                g.DrawRectangle(new Pen(color, 8), new RectangleF(0, 0, etoImage.Width - 1, etoImage.Height - 1));
+                // Draw the group border directly onto the existing bitmap. We deliberately avoid
+                // compositing into a new bitmap with Graphics.DrawImage, as that produced blank
+                // thumbnails (border only) on the WinForms backend.
+                using (var g = new Graphics(etoImage))
+                {
+                    var color = GetColorForGroup(item.DocumentGroupId);
+                    using var pen = new Pen(color, 8);
+                    g.DrawRectangle(pen, new RectangleF(0, 0, etoImage.Width - 1, etoImage.Height - 1));
+                }
             }
-            etoImage.Dispose();
-            return bmp;
+            catch (Exception e)
+            {
+                // If border drawing fails for any reason, show the plain thumbnail rather than
+                // a blank/broken image.
+                Log.ErrorException("Error drawing document group border on thumbnail", e);
+            }
         }
 
         return etoImage;
