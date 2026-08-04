@@ -113,16 +113,28 @@ public class DocumentManager
 
     public void DeleteGroup(DocumentGroup groupToDelete)
     {
+        if (!Groups.Contains(groupToDelete))
+        {
+            return;
+        }
+
         var imagesToRemove = _imageList.Images.Where(i => i.DocumentGroupId == groupToDelete.Id).ToList();
+        // Remove the group before mutating the image list so ImagesUpdated cannot
+        // independently clean it up while this deletion is still in progress.
+        Groups.Remove(groupToDelete);
         if (imagesToRemove.Any())
         {
             _imageList.Mutate(new ImageListMutation.DeleteSelected(), ListSelection.From(imagesToRemove));
         }
-        
-        if (Groups.Contains(groupToDelete))
+
+        // Restore a single empty document only when this deletion left no groups.
+        // If an image-list update occurred, its normal group cleanup has already run.
+        if (!Groups.Any())
         {
-            Groups.Remove(groupToDelete);
-            GroupsChanged?.Invoke(this, EventArgs.Empty);
+            AddGroup("Document 1");
         }
+        // Notify after the image mutation finishes so the tree refreshes only once,
+        // with the final group list.
+        GroupsChanged?.Invoke(this, EventArgs.Empty);
     }
 }

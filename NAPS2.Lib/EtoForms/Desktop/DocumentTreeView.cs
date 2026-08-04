@@ -188,6 +188,11 @@ internal class DocumentTreeView
     {
         if (_treeView.SelectedItem is GroupTreeItem item)
         {
+            // Clear the selection and page filter before the manager publishes
+            // its refresh events, so a replacement row cannot become the target
+            // of a second delete.
+            _treeView.SelectedItem = null;
+            _parentForm.FilterToDocumentGroup(null);
             _documentManager.DeleteGroup(item.Group);
         }
     }
@@ -205,6 +210,8 @@ internal class DocumentTreeView
             _rootItem.Children.Add(new GroupTreeItem(group));
         }
         _treeView.ReloadData();
+        _treeView.SelectedItem = null;
+        _parentForm.FilterToDocumentGroup(null);
     }
 
     private void TreeView_SelectionChanged(object? sender, EventArgs e)
