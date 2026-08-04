@@ -75,7 +75,17 @@ public class ThumbnailRenderQueue : IDisposable
         // TODO: Make this run as async?
         // TODO: Verify WorkerFactory is not null? Or handle this better for tests?
         bool useWorker = PlatformCompat.System.RenderInWorker;
-        var worker = useWorker ? _scanningContext.CreateWorker(WorkerType.Native) : null;
+        WorkerContext? worker = null;
+        try
+        {
+            worker = useWorker ? _scanningContext.CreateWorker(WorkerType.Native) : null;
+        }
+        catch (Exception e)
+        {
+            // Thumbnail rendering must not depend on the helper process being available. The
+            // full image viewer renders in-process, so use that same renderer as a fallback.
+            Log.ErrorException("Could not start the worker for thumbnail rendering; using local rendering", e);
+        }
         var fallback = new ExpFallback(100, 60 * 1000);
         while (true)
         {
@@ -97,9 +107,28 @@ public class ThumbnailRenderQueue : IDisposable
                     }
                     using (var imageToRender = next.GetClonedImage())
                     {
-                        var thumb = worker != null
-                            ? RenderThumbnailWithWorker(worker, imageToRender, thumbnailSize)
-                            : _thumbnailRenderer.Render(imageToRender, thumbnailSize).Result;
+                        IMemoryImage thumb;
+                        if (worker != null)
+                        {
+                            try
+                            {
+                                thumb = RenderThumbnailWithWorker(worker, imageToRender, thumbnailSize);
+                            }
+                            catch (Exception e)
+                            {
+                                // A missing native dependency or a worker startup/IPC failure
+                                // should not leave the list blank. Render this thumbnail locally
+                                // and let the next iteration try to restore the worker.
+                                Log.ErrorException("Worker thumbnail rendering failed; using local rendering", e);
+                                worker.Dispose();
+                                worker = null;
+                                thumb = _thumbnailRenderer.Render(imageToRender, thumbnailSize).Result;
+                            }
+                        }
+                        else
+                        {
+                            thumb = _thumbnailRenderer.Render(imageToRender, thumbnailSize).Result;
+                        }
 
                         if (!ThumbnailStillNeedsRendering(next, thumbnailSize))
                         {
@@ -118,7 +147,16 @@ public class ThumbnailRenderQueue : IDisposable
                 if (worker != null)
                 {
                     worker.Dispose();
-                    worker = _scanningContext.CreateWorker(WorkerType.Native);
+                    try
+                    {
+                        worker = _scanningContext.CreateWorker(WorkerType.Native);
+                    }
+                    catch (Exception workerException)
+                    {
+                        worker = null;
+                        Log.ErrorException("Could not restart the worker for thumbnail rendering; using local rendering",
+                            workerException);
+                    }
                 }
                 Thread.Sleep(fallback.Value);
                 fallback.Increase();
