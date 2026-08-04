@@ -27,44 +27,9 @@ public class ImageListViewBehavior : ListViewBehavior<UiImage>
     public override Image GetImage(IListView<UiImage> listView, UiImage item)
     {
         using var thumbnail = _thumbnailProvider.GetThumbnail(item, listView.ImageSize.Width);
-        var etoImage = thumbnail.ToEtoImage();
-
-        if (item.DocumentGroupId != Guid.Empty)
-        {
-            try
-            {
-                // Draw the group border directly onto the existing bitmap. We deliberately avoid
-                // compositing into a new bitmap with Graphics.DrawImage, as that produced blank
-                // thumbnails (border only) on the WinForms backend.
-                using (var g = new Graphics(etoImage))
-                {
-                    var color = GetColorForGroup(item.DocumentGroupId);
-                    using var pen = new Pen(color, 8);
-                    g.DrawRectangle(pen, new RectangleF(0, 0, etoImage.Width - 1, etoImage.Height - 1));
-                }
-            }
-            catch (Exception e)
-            {
-                // If border drawing fails for any reason, show the plain thumbnail rather than
-                // a blank/broken image.
-                Log.ErrorException("Error drawing document group border on thumbnail", e);
-            }
-        }
-
-        return etoImage;
-    }
-
-    private Color GetColorForGroup(Guid groupId)
-    {
-        var hash = groupId.GetHashCode();
-        var r = (byte)(hash & 0xFF);
-        var g = (byte)((hash >> 8) & 0xFF);
-        var b = (byte)((hash >> 16) & 0xFF);
-        if (r < 100 && g < 100 && b < 100)
-        {
-            r += 100; g += 100; b += 100;
-        }
-        return Color.FromArgb(r, g, b);
+        // Keep the page preview clean. Document groups remain available for organization
+        // and separation, but are no longer drawn as colored borders over scanned pages.
+        return thumbnail.ToEtoImage();
     }
 
     public override bool AllowDragDrop => true;
