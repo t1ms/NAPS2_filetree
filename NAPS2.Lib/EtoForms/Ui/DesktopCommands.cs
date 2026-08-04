@@ -198,6 +198,11 @@ public class DesktopCommands
             Text = "Search Scanned Documents",
             IconName = "zoom_small"
         };
+        DocumentIndex = new ActionCommand(desktopSubFormController.ShowDocumentIndexForm)
+        {
+            Text = "Document Indexing",
+            IconName = "text_small"
+        };
         Split = new ActionCommand(desktopSubFormController.ShowSplitForm)
         {
             Text = UiStrings.Split,
@@ -425,6 +430,7 @@ public class DesktopCommands
     public ActionCommand ExtractFields { get; set; }
     public ActionCommand ZonalOcrResults { get; set; }
     public ActionCommand SearchDocuments { get; set; }
+    public ActionCommand DocumentIndex { get; set; }
     public ActionCommand Split { get; set; }
     public ActionCommand Combine { get; set; }
     public ActionCommand EditWithApp { get; set; }

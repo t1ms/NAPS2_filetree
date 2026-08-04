@@ -12,10 +12,11 @@ public class DesktopSubFormController : IDesktopSubFormController
     private readonly TesseractLanguageManager _tesseractLanguageManager;
     private readonly ZonalOcrService _zonalOcrService;
     private readonly ZonalOcrResultsStore _zonalOcrResultsStore;
+    private readonly DocumentManager _documentManager;
 
     public DesktopSubFormController(IFormFactory formFactory, UiImageList imageList,
         DesktopImagesController desktopImagesController, TesseractLanguageManager tesseractLanguageManager,
-        ZonalOcrService zonalOcrService, ZonalOcrResultsStore zonalOcrResultsStore)
+        ZonalOcrService zonalOcrService, ZonalOcrResultsStore zonalOcrResultsStore, DocumentManager documentManager)
     {
         _formFactory = formFactory;
         _imageList = imageList;
@@ -23,6 +24,7 @@ public class DesktopSubFormController : IDesktopSubFormController
         _tesseractLanguageManager = tesseractLanguageManager;
         _zonalOcrService = zonalOcrService;
         _zonalOcrResultsStore = zonalOcrResultsStore;
+        _documentManager = documentManager;
     }
 
     private Func<ListSelection<UiImage>>? SelectionFunc { get; init; }
@@ -32,7 +34,7 @@ public class DesktopSubFormController : IDesktopSubFormController
     public IDesktopSubFormController WithSelection(Func<ListSelection<UiImage>> selectionFunc)
     {
         return new DesktopSubFormController(_formFactory, _imageList, _desktopImagesController,
-            _tesseractLanguageManager, _zonalOcrService, _zonalOcrResultsStore)
+            _tesseractLanguageManager, _zonalOcrService, _zonalOcrResultsStore, _documentManager)
         {
             SelectionFunc = selectionFunc
         };
@@ -97,6 +99,11 @@ public class DesktopSubFormController : IDesktopSubFormController
     public void ShowSearchForm()
     {
         _formFactory.Create<SearchForm>().ShowModal();
+    }
+
+    public void ShowDocumentIndexForm()
+    {
+        _formFactory.Create<DocumentIndexForm>().ShowModal();
     }
 
     public async void ExtractZonalFields()
