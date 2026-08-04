@@ -172,6 +172,27 @@ public class FileConfigScopeTests : ContextualTests
         Assert.Equal(LocalizedOcrMode.Best, ocrMode);
     }
 
+    [Fact]
+    public void FailedWriteReportsFailureAndCanBeRetried()
+    {
+        var configPath = Path.Combine(FolderPath, "config.xml");
+        var scope = new FileConfigScope<CommonConfig>(configPath,
+            new ConfigSerializer(ConfigReadMode.All, ConfigRootName.UserConfig), ConfigScopeMode.ReadWrite);
+        Assert.True(scope.Set(c => c.Culture, "fr"));
+
+        using (new FileStream(configPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+        {
+            Assert.False(scope.Set(c => c.Culture, "de"));
+            Assert.Equal("de", scope.GetOrDefault(c => c.Culture));
+        }
+
+        Assert.True(scope.Set(c => c.CheckForUpdates, true));
+        var reloadedScope = new FileConfigScope<CommonConfig>(configPath,
+            new ConfigSerializer(ConfigReadMode.All, ConfigRootName.UserConfig), ConfigScopeMode.ReadWrite);
+        Assert.Equal("de", reloadedScope.GetOrDefault(c => c.Culture));
+        Assert.True(reloadedScope.GetOrDefault(c => c.CheckForUpdates));
+    }
+
     private static void DirectSetValue(FileStream stream, string tagName, string value)
     {
         if (value == null) throw new ArgumentNullException(nameof(value));

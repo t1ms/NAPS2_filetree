@@ -45,28 +45,33 @@ public class TransactionConfigScope<TConfig> : ConfigScope<TConfig>
     /// <summary>
     /// Flushes all changes to the underlying scope.
     /// </summary>
-    public void Commit()
+    public bool Commit()
     {
         lock (this)
         {
             lock (OriginalScope)
             {
-                OriginalScope.CopyFrom(_changes);
+                if (!OriginalScope.CopyFrom(_changes))
+                {
+                    return false;
+                }
                 _changes = new();
             }
             ChangesFlushed();
+            return true;
         }
     }
 
     /// <summary>
     /// Resets all changes that haven't been committed.
     /// </summary>
-    public void Rollback()
+    public bool Rollback()
     {
         lock (this)
         {
             _changes = new();
             ChangesFlushed();
+            return true;
         }
     }
 
@@ -83,22 +88,25 @@ public class TransactionConfigScope<TConfig> : ConfigScope<TConfig>
         return OriginalScope.TryGet(lookup, out value);
     }
 
-    protected override void SetInternal<T>(Expression<Func<TConfig, T>> accessor, T value)
+    protected override bool SetInternal<T>(Expression<Func<TConfig, T>> accessor, T value)
     {
         _changes.Set(accessor, value);
         ChangesMade();
+        return true;
     }
 
-    protected override void RemoveInternal<T>(Expression<Func<TConfig, T>> accessor)
+    protected override bool RemoveInternal<T>(Expression<Func<TConfig, T>> accessor)
     {
         _changes.Remove(accessor);
         ChangesMade();
+        return true;
     }
 
-    protected override void CopyFromInternal(ConfigStorage<TConfig> source)
+    protected override bool CopyFromInternal(ConfigStorage<TConfig> source)
     {
         _changes.CopyFrom(source);
         ChangesMade();
+        return true;
     }
 
     private void ChangesMade()

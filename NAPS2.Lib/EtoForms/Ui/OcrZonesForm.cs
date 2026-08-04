@@ -99,13 +99,14 @@ public class OcrZonesForm : ImageFormBase
             C.Label("Drag on the page to draw a field zone. Click a zone to select it, then rename or delete it."),
             L.Row(
                 L.Column(
-                    C.Label("Template name"),
+                    C.Label("Template name (used to identify this set of fields)"),
                     L.Row(_templateDropDown.NaturalWidth(150), _templateName.NaturalWidth(150)),
                     _useForScanning
                 ),
                 L.Column(
-                    C.Label("Zones"),
+                    C.Label("Fields"),
                     _zoneList.NaturalWidth(200),
+                    C.Label("Selected field name (used in CSV and filename placeholders)"),
                     L.Row(_zoneName.NaturalWidth(150), _deleteZone),
                     C.Label("Extract as"),
                     _zoneExtractionMode.NaturalWidth(180),
@@ -115,7 +116,7 @@ public class OcrZonesForm : ImageFormBase
                     _zonePrompt.NaturalWidth(360)
                 ).Scale()
             ),
-            C.Label("Renaming a field is saved together with the template."),
+            C.Label("Name the template and every field, then click Save. Your field names can be used as $(FIELD_NAME) when saving."),
             _validationMessage,
             C.Label("Draw at least one usable zone, give every field a unique non-empty name, then click Save."),
             _llmEnabled,
@@ -255,19 +256,28 @@ public class OcrZonesForm : ImageFormBase
         templates = existingIndex == -1
             ? templates.Add(template)
             : templates.SetItem(existingIndex, template);
-        Config.User.Set(c => c.OcrZoneTemplates, templates);
         var activeName = Config.Get(c => c.ActiveOcrZoneTemplateName);
+        var transaction = Config.User.BeginTransaction();
+        transaction.Set(c => c.OcrZoneTemplates, templates);
         if (_useForScanning.IsChecked())
         {
-            Config.User.Set(c => c.ActiveOcrZoneTemplateName, name);
+            transaction.Set(c => c.ActiveOcrZoneTemplateName, name);
         }
         else if (activeName?.Equals(_editingTemplateName, StringComparison.OrdinalIgnoreCase) == true ||
                  activeName?.Equals(name, StringComparison.OrdinalIgnoreCase) == true)
         {
-            Config.User.Set(c => c.ActiveOcrZoneTemplateName, "");
+            transaction.Set(c => c.ActiveOcrZoneTemplateName, "");
         }
-        Config.User.Set(c => c.EnableLlmFieldCleanup, _llmEnabled.IsChecked());
+        transaction.Set(c => c.EnableLlmFieldCleanup, _llmEnabled.IsChecked());
+        if (!transaction.Commit())
+        {
+            ShowValidation("NAPS2 could not save this template because its settings file is in use. Close any other NAPS2 window and try again.",
+                _templateName);
+            return false;
+        }
         _editingTemplateName = name;
+        _validationMessage.Text = $"Saved template \"{name}\" with {_zones.Count} field(s).";
+        _validationMessage.Visible = true;
         return true;
     }
 

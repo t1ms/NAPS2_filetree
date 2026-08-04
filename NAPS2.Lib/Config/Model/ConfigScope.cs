@@ -49,7 +49,7 @@ public abstract class ConfigScope<TConfig>
     // TODO: This call isn't necessarily safe, as the compiler may insert a cast into the accessor expression.
     // e.g. if the value is a nullable struct but the config property isn't nullable
     // One possible fix is to use a property set expression instead of accessor + value
-    public void Set<T>(Expression<Func<TConfig, T>> accessor, T value)
+    public bool Set<T>(Expression<Func<TConfig, T>> accessor, T value)
     {
         if (Mode == ConfigScopeMode.ReadOnly)
         {
@@ -57,11 +57,11 @@ public abstract class ConfigScope<TConfig>
         }
         lock (this)
         {
-            SetInternal(accessor, value);
+            return SetInternal(accessor, value);
         }
     }
 
-    public void Remove<T>(Expression<Func<TConfig, T>> accessor)
+    public bool Remove<T>(Expression<Func<TConfig, T>> accessor)
     {
         if (Mode == ConfigScopeMode.ReadOnly)
         {
@@ -69,11 +69,11 @@ public abstract class ConfigScope<TConfig>
         }
         lock (this)
         {
-            RemoveInternal(accessor);
+            return RemoveInternal(accessor);
         }
     }
 
-    public void CopyFrom(ConfigStorage<TConfig> source)
+    public bool CopyFrom(ConfigStorage<TConfig> source)
     {
         if (Mode == ConfigScopeMode.ReadOnly)
         {
@@ -81,7 +81,7 @@ public abstract class ConfigScope<TConfig>
         }
         lock (this)
         {
-            CopyFromInternal(source);
+            return CopyFromInternal(source);
         }
     }
 
@@ -93,9 +93,9 @@ public abstract class ConfigScope<TConfig>
     protected abstract bool TryGetInternal(ConfigLookup accessor, out object? value);
 
     // TODO: Maybe use ConfigLookup for consistency
-    protected abstract void SetInternal<T>(Expression<Func<TConfig, T>> accessor, T value);
+    protected abstract bool SetInternal<T>(Expression<Func<TConfig, T>> accessor, T value);
 
-    protected abstract void RemoveInternal<T>(Expression<Func<TConfig, T>> accessor);
+    protected abstract bool RemoveInternal<T>(Expression<Func<TConfig, T>> accessor);
 
-    protected abstract void CopyFromInternal(ConfigStorage<TConfig> source);
+    protected abstract bool CopyFromInternal(ConfigStorage<TConfig> source);
 }

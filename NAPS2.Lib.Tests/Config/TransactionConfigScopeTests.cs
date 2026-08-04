@@ -33,7 +33,7 @@ public class TransactionConfigScopeTests
         Assert.Equal("fr", _baseScope.GetOrDefault(c => c.Culture));
         Assert.Equal("de", _transact.GetOrDefault(c => c.Culture));
 
-        _transact.Commit();
+        Assert.True(_transact.Commit());
         Assert.False(_transact.HasChanges);
         Assert.Equal("de", _baseScope.GetOrDefault(c => c.Culture));
         Assert.Equal("de", _transact.GetOrDefault(c => c.Culture));
@@ -47,7 +47,7 @@ public class TransactionConfigScopeTests
         Assert.Equal("fr", _baseScope.GetOrDefault(c => c.Culture));
         Assert.Equal("de", _transact.GetOrDefault(c => c.Culture));
 
-        _transact.Rollback();
+        Assert.True(_transact.Rollback());
         Assert.False(_transact.HasChanges);
         Assert.Equal("fr", _baseScope.GetOrDefault(c => c.Culture));
         Assert.Equal("fr", _transact.GetOrDefault(c => c.Culture));

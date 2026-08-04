@@ -39,22 +39,22 @@ public class FileConfigScope<TConfig> : ConfigScope<TConfig>
         return false;
     }
 
-    protected override void SetInternal<T>(Expression<Func<TConfig, T>> accessor, T value)
+    protected override bool SetInternal<T>(Expression<Func<TConfig, T>> accessor, T value)
     {
         _changes.Set(accessor, value);
-        WriteHandshake();
+        return WriteHandshake();
     }
 
-    protected override void RemoveInternal<T>(Expression<Func<TConfig, T>> accessor)
+    protected override bool RemoveInternal<T>(Expression<Func<TConfig, T>> accessor)
     {
         _changes.Remove(accessor);
-        WriteHandshake();
+        return WriteHandshake();
     }
 
-    protected override void CopyFromInternal(ConfigStorage<TConfig> source)
+    protected override bool CopyFromInternal(ConfigStorage<TConfig> source)
     {
         _changes.CopyFrom(source);
-        WriteHandshake();
+        return WriteHandshake();
     }
 
     private void ReadHandshake()
@@ -85,7 +85,7 @@ public class FileConfigScope<TConfig> : ConfigScope<TConfig>
         }
     }
 
-    private void WriteHandshake()
+    private bool WriteHandshake()
     {
         // TODO: Retry, maybe async?
         try
@@ -116,10 +116,12 @@ public class FileConfigScope<TConfig> : ConfigScope<TConfig>
             // No exceptions, so we can commit the updated configuration and reset our changes
             _cache = copy;
             _changes = new ConfigStorage<TConfig>();
+            return true;
         }
         catch (IOException ex)
         {
             Log.ErrorException($"Error writing {_filePath}", ex);
+            return false;
         }
     }
 

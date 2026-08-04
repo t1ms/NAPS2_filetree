@@ -17,12 +17,12 @@ public class DefaultsConfigScope<TConfig> : ConfigScope<TConfig>
         return _storage.TryGet(lookup, out value);
     }
 
-    protected override void SetInternal<T>(Expression<Func<TConfig, T>> accessor, T value) =>
+    protected override bool SetInternal<T>(Expression<Func<TConfig, T>> accessor, T value) =>
         throw new InvalidOperationException();
 
-    protected override void RemoveInternal<T>(Expression<Func<TConfig, T>> accessor) =>
+    protected override bool RemoveInternal<T>(Expression<Func<TConfig, T>> accessor) =>
         throw new InvalidOperationException();
 
-    protected override void CopyFromInternal(ConfigStorage<TConfig> source) =>
+    protected override bool CopyFromInternal(ConfigStorage<TConfig> source) =>
         throw new InvalidOperationException();
 }
