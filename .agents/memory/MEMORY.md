@@ -1,3 +1,4 @@
 - [NAPS2 cross-compile on Replit](naps2-cross-compile.md) — Linux build gotchas: homebrew protoc overrides, SDK pin, setsid for long publishes, portable ZIP layout.
 - [Local AI model policy](local-ai-model-policy.md) — do not bundle or auto-download a default GGUF model; keep local AI optional and user-enabled.
 - [Thumbnail worker fallback](thumbnail-worker-fallback.md) — keep list previews visible with in-process rendering when the native worker fails.
+- [Eto WinForms drawing pitfalls](eto-winforms-drawing.md) — draw overlays in place; Eto Graphics.DrawImage recompositing gave blank list thumbnails.
