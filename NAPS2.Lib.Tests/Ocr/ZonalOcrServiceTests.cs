@@ -124,6 +124,175 @@ public class ZonalOcrServiceTests : ContextualTests
     }
 
     [Fact]
+    public async Task MalformedZoneWithZeroDimensionsProducesEmptyField()
+    {
+        var config = Naps2Config.Stub();
+        var service = new ZonalOcrService(ScanningContext, config, new ZonalOcrResultsStore(),
+            new LlmFieldNormalizer(config));
+        using var image = ScanningContext.CreateProcessedImage(LoadImage(ImageResources.image_upc_barcode));
+        var template = new OcrZoneTemplate
+        {
+            Name = "Barcode",
+            Zones =
+            [
+                new OcrZone
+                {
+                    Name = "ProductCode",
+                    Left = 0,
+                    Top = 0,
+                    Width = 0,
+                    Height = 0,
+                    ExtractionMode = OcrZoneExtractionMode.Barcode
+                }
+            ]
+        };
+
+        var result = await service.ExtractFields(image, template, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal("", Assert.Single(result.Fields).Value);
+    }
+
+    [Fact]
+    public async Task MalformedZoneWithNegativeDimensionsProducesEmptyField()
+    {
+        var config = Naps2Config.Stub();
+        var service = new ZonalOcrService(ScanningContext, config, new ZonalOcrResultsStore(),
+            new LlmFieldNormalizer(config));
+        using var image = ScanningContext.CreateProcessedImage(LoadImage(ImageResources.image_upc_barcode));
+        var template = new OcrZoneTemplate
+        {
+            Name = "Barcode",
+            Zones =
+            [
+                new OcrZone
+                {
+                    Name = "ProductCode",
+                    Left = 0,
+                    Top = 0,
+                    Width = -0.5,
+                    Height = -0.5,
+                    ExtractionMode = OcrZoneExtractionMode.Barcode
+                }
+            ]
+        };
+
+        var result = await service.ExtractFields(image, template, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal("", Assert.Single(result.Fields).Value);
+    }
+
+    [Fact]
+    public async Task MalformedZoneWithOutOfRangeOriginProducesEmptyField()
+    {
+        var config = Naps2Config.Stub();
+        var service = new ZonalOcrService(ScanningContext, config, new ZonalOcrResultsStore(),
+            new LlmFieldNormalizer(config));
+        using var image = ScanningContext.CreateProcessedImage(LoadImage(ImageResources.image_upc_barcode));
+        // Left > 1 means the zone starts past the right edge of the image; nothing to decode.
+        var template = new OcrZoneTemplate
+        {
+            Name = "Barcode",
+            Zones =
+            [
+                new OcrZone
+                {
+                    Name = "ProductCode",
+                    Left = 1.5,
+                    Top = 1.5,
+                    Width = 0.5,
+                    Height = 0.5,
+                    ExtractionMode = OcrZoneExtractionMode.Barcode
+                }
+            ]
+        };
+
+        var result = await service.ExtractFields(image, template, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal("", Assert.Single(result.Fields).Value);
+    }
+
+    [Fact]
+    public async Task PartiallyOverlappingZoneClipsToImageEdgeAndDecodes()
+    {
+        // Zone extends past the right/bottom edge. The visible portion should still be decoded.
+        var config = Naps2Config.Stub();
+        var service = new ZonalOcrService(ScanningContext, config, new ZonalOcrResultsStore(),
+            new LlmFieldNormalizer(config));
+        using var image = ScanningContext.CreateProcessedImage(LoadImage(ImageResources.image_upc_barcode));
+        // Width = 2.0 → clamped to 1.0, then further clipped to (1.0 - Left) of the image.
+        // The barcode is centred in this image so a left-anchored over-wide zone still covers it.
+        var template = new OcrZoneTemplate
+        {
+            Name = "Barcode",
+            Zones =
+            [
+                new OcrZone
+                {
+                    Name = "ProductCode",
+                    Left = 0,
+                    Top = 0,
+                    Width = 2.0,
+                    Height = 2.0,
+                    ExtractionMode = OcrZoneExtractionMode.Barcode,
+                    BarcodeFormat = OcrZoneBarcodeFormat.UpcA
+                }
+            ]
+        };
+
+        var result = await service.ExtractFields(image, template, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal("725272730706", Assert.Single(result.Fields).Value);
+    }
+
+    [Fact]
+    public async Task MultiZoneTemplateWithOneMalformedZoneStillDecodesValidZone()
+    {
+        // The first zone is malformed (zero size); the second is a valid barcode zone.
+        // Both fields must be present: first is empty, second carries the decoded value.
+        var config = Naps2Config.Stub();
+        var service = new ZonalOcrService(ScanningContext, config, new ZonalOcrResultsStore(),
+            new LlmFieldNormalizer(config));
+        using var image = ScanningContext.CreateProcessedImage(LoadImage(ImageResources.image_upc_barcode));
+        var template = new OcrZoneTemplate
+        {
+            Name = "Barcode",
+            Zones =
+            [
+                new OcrZone
+                {
+                    Name = "BadZone",
+                    Left = 0,
+                    Top = 0,
+                    Width = 0,
+                    Height = 0,
+                    ExtractionMode = OcrZoneExtractionMode.Barcode
+                },
+                new OcrZone
+                {
+                    Name = "ProductCode",
+                    Left = 0,
+                    Top = 0,
+                    Width = 1,
+                    Height = 1,
+                    ExtractionMode = OcrZoneExtractionMode.Barcode,
+                    BarcodeFormat = OcrZoneBarcodeFormat.UpcA
+                }
+            ]
+        };
+
+        var result = await service.ExtractFields(image, template, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Fields.Count);
+        Assert.Equal("", result.Fields[0].Value);
+        Assert.Equal("725272730706", result.Fields[1].Value);
+    }
+
+    [Fact]
     public void ActiveTemplateLookupIgnoresNameCasing()
     {
         var config = Naps2Config.Stub();

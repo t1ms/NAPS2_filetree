@@ -106,7 +106,13 @@ public class ZonalOcrService
             int zh = (int) Math.Round(zone.Height.Clamp(0, 1) * h);
             zw = Math.Min(zw, w - zx);
             zh = Math.Min(zh, h - zy);
-            if (zw >= 4 && zh >= 4)
+            if (zw < 4 || zh < 4)
+            {
+                Log.Debug(
+                    $"Zonal OCR: zone \"{zone.Name}\" skipped — effective size {zw}x{zh} px is too small " +
+                    $"(raw coords: left={zone.Left:F3} top={zone.Top:F3} w={zone.Width:F3} h={zone.Height:F3}).");
+            }
+            else
             {
                 string tempPath = Path.Combine(_scanningContext.TempFolderPath,
                     Path.GetRandomFileName() + ".png");
