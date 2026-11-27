@@ -5,30 +5,10 @@ namespace NAPS2.Ocr;
 
 /// <summary>
 /// Substitutes content-based tokens in file name patterns. Supports both "$(FieldName)" and legacy
-/// "{FieldName}" syntax. Field names come from zonal OCR zone templates; additionally a set of
-/// generic document tokens (DOC_DATE etc.) can be filled by local-LLM whole-page extraction.
+/// "{FieldName}" syntax. Field names come from zonal OCR zone templates.
 /// </summary>
 public static class ContentPlaceholders
 {
-    public const string DOC_DATE = "DOC_DATE";
-    public const string DOC_SENDER = "DOC_SENDER";
-    public const string DOC_TYPE = "DOC_TYPE";
-    public const string DOC_REF = "DOC_REF";
-
-    /// <summary>
-    /// The generic document tokens fillable via local-LLM whole-page extraction, with the field
-    /// description used in the extraction prompt.
-    /// </summary>
-    public static readonly (string Name, string PromptDescription)[] GenericTokens =
-    {
-        (DOC_DATE, "document date in YYYY-MM-DD format"),
-        (DOC_SENDER, "sender, vendor or company name"),
-        (DOC_TYPE, "document type as a single word (e.g. Invoice, Letter, Receipt, Contract)"),
-        (DOC_REF, "reference, invoice or document number")
-    };
-
-    public static IEnumerable<string> GenericTokenNames => GenericTokens.Select(x => x.Name);
-
     /// <summary>
     /// Names reserved by NAPS2's original date/time and auto-number placeholders. Zone field
     /// names may match these names, but must never override the built-in behavior.

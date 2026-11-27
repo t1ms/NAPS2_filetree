@@ -26,11 +26,6 @@ public class OcrZonesForm : ImageFormBase
     private readonly Label _validationMessage = new() { Text = "", Visible = false };
     private readonly CheckBox _useForScanning = new()
         { Text = "Use this template for scans (extract fields from each scanned page)", Checked = true };
-    private readonly TextBox _zonePrompt = new();
-    private readonly CheckBox _llmEnabled = new()
-        { Text = "Clean up field values with a local AI model (CPU-only, .gguf)" };
-    private readonly Label _llmModelLabel = new() { Text = "" };
-    private readonly Button _llmModelPicker;
 
     private readonly List<EditableZone> _zones = new();
     private int _selectedZoneIndex = -1;
@@ -51,9 +46,6 @@ public class OcrZonesForm : ImageFormBase
         IconName = "text_small";
 
         _deleteZone = C.Button("Delete Zone", DeleteSelectedZone);
-        _llmModelPicker = C.Button("Choose Model...", PickLlmModel);
-        _llmEnabled.Checked = config.Get(c => c.EnableLlmFieldCleanup);
-        UpdateLlmModelLabel();
 
         Overlay.MouseDown += Overlay_MouseDown;
         Overlay.MouseMove += Overlay_MouseMove;
@@ -62,12 +54,11 @@ public class OcrZonesForm : ImageFormBase
         _templateDropDown.SelectedIndexChanged += TemplateDropDown_SelectedIndexChanged;
         _zoneList.SelectedIndexChanged += ZoneList_SelectedIndexChanged;
         _zoneName.TextChanged += ZoneName_TextChanged;
-        _zonePrompt.TextChanged += ZonePrompt_TextChanged;
         _zoneExtractionMode.SelectedIndexChanged += ZoneExtractionMode_SelectedIndexChanged;
         _barcodeFormat.SelectedIndexChanged += BarcodeFormat_SelectedIndexChanged;
     }
 
-    private record EditableZone(string Name, RectangleF Rect, string? LlmPrompt = null,
+    private record EditableZone(string Name, RectangleF Rect,
         OcrZoneExtractionMode ExtractionMode = OcrZoneExtractionMode.Text,
         OcrZoneBarcodeFormat BarcodeFormat = OcrZoneBarcodeFormat.Any)
     {
@@ -111,16 +102,12 @@ public class OcrZonesForm : ImageFormBase
                     C.Label("Extract as"),
                     _zoneExtractionMode.NaturalWidth(180),
                     C.Label("Barcode format"),
-                    _barcodeFormat.NaturalWidth(180),
-                    C.Label("AI prompt for this zone (optional, {FieldType} = zone name)"),
-                    _zonePrompt.NaturalWidth(360)
+                    _barcodeFormat.NaturalWidth(180)
                 ).Scale()
             ),
             C.Label("Name the template and every field, then click Save. Your field names can be used as $(FIELD_NAME) when saving."),
             _validationMessage,
             C.Label("Draw at least one usable zone, give every field a unique non-empty name, then click Save."),
-            _llmEnabled,
-            L.Row(_llmModelPicker, _llmModelLabel.Scale()),
             L.Row(
                 C.Filler(),
                 L.OkCancel(
@@ -165,7 +152,7 @@ public class OcrZonesForm : ImageFormBase
             {
                 _zones.Add(new EditableZone(zone.Name,
                     new RectangleF((float) zone.Left, (float) zone.Top, (float) zone.Width, (float) zone.Height),
-                    zone.LlmPrompt, zone.ExtractionMode, zone.BarcodeFormat));
+                    zone.ExtractionMode, zone.BarcodeFormat));
             }
             _useForScanning.Checked = Config.Get(c => c.ActiveOcrZoneTemplateName) == template.Name;
         }
@@ -236,7 +223,6 @@ public class OcrZonesForm : ImageFormBase
                 Top = z.Rect.Y,
                 Width = z.Rect.Width,
                 Height = z.Rect.Height,
-                LlmPrompt = string.IsNullOrWhiteSpace(z.LlmPrompt) ? null : z.LlmPrompt.Trim(),
                 ExtractionMode = z.ExtractionMode,
                 BarcodeFormat = z.BarcodeFormat
             }).ToImmutableList()
@@ -268,7 +254,6 @@ public class OcrZonesForm : ImageFormBase
         {
             transaction.Set(c => c.ActiveOcrZoneTemplateName, "");
         }
-        transaction.Set(c => c.EnableLlmFieldCleanup, _llmEnabled.IsChecked());
         if (!transaction.Commit())
         {
             ShowValidation("NAPS2 could not save this template because its settings file is in use. Close any other NAPS2 window and try again.",
@@ -332,36 +317,6 @@ public class OcrZonesForm : ImageFormBase
         focus.Focus();
     }
 
-    private void PickLlmModel()
-    {
-        var dialog = new OpenFileDialog
-        {
-            Title = "Choose AI Model",
-            Filters = { new FileFilter("GGUF model files", ".gguf"), new FileFilter("All files", ".*") }
-        };
-        if (dialog.ShowDialog(this) == DialogResult.Ok)
-        {
-            Config.User.Set(c => c.LlmModelPath, dialog.FileName);
-            UpdateLlmModelLabel();
-        }
-    }
-
-    private void UpdateLlmModelLabel()
-    {
-        var configured = Config.Get(c => c.LlmModelPath);
-        if (!string.IsNullOrWhiteSpace(configured))
-        {
-            _llmModelLabel.Text = File.Exists(configured)
-                ? $"Model: {Path.GetFileName(configured)}"
-                : $"Model not found: {configured}";
-        }
-        else
-        {
-            _llmModelLabel.Text =
-                $"No model selected. You can also drop a .gguf file into \"{LlmFieldNormalizer.DefaultModelsFolder}\".";
-        }
-    }
-
     private void UpdateZoneList()
     {
         _syncing = true;
@@ -374,7 +329,6 @@ public class OcrZonesForm : ImageFormBase
             }
             _zoneList.SelectedIndex = _selectedZoneIndex;
             _zoneName.Text = _selectedZoneIndex != -1 ? _zones[_selectedZoneIndex].Name : "";
-            _zonePrompt.Text = _selectedZoneIndex != -1 ? _zones[_selectedZoneIndex].LlmPrompt ?? "" : "";
             _zoneExtractionMode.SelectedIndex = _selectedZoneIndex != -1
                 ? (int) _zones[_selectedZoneIndex].ExtractionMode : 0;
             _barcodeFormat.SelectedIndex = _selectedZoneIndex != -1
@@ -394,7 +348,6 @@ public class OcrZonesForm : ImageFormBase
         _selectedZoneIndex = _zoneList.SelectedIndex;
         _syncing = true;
         _zoneName.Text = _selectedZoneIndex != -1 ? _zones[_selectedZoneIndex].Name : "";
-        _zonePrompt.Text = _selectedZoneIndex != -1 ? _zones[_selectedZoneIndex].LlmPrompt ?? "" : "";
         _zoneExtractionMode.SelectedIndex = _selectedZoneIndex != -1
             ? (int) _zones[_selectedZoneIndex].ExtractionMode : 0;
         _barcodeFormat.SelectedIndex = _selectedZoneIndex != -1
@@ -421,12 +374,6 @@ public class OcrZonesForm : ImageFormBase
         _zoneList.SelectedIndex = selected;
         _syncing = false;
         Overlay.Invalidate();
-    }
-
-    private void ZonePrompt_TextChanged(object? sender, EventArgs e)
-    {
-        if (_syncing || _selectedZoneIndex == -1) return;
-        _zones[_selectedZoneIndex] = _zones[_selectedZoneIndex] with { LlmPrompt = _zonePrompt.Text };
     }
 
     private void ZoneExtractionMode_SelectedIndexChanged(object? sender, EventArgs e)

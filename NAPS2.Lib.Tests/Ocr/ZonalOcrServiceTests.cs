@@ -13,8 +13,7 @@ public class ZonalOcrServiceTests : ContextualTests
     public async Task BarcodeZoneExtractsValueWithoutOcrEngine()
     {
         var config = Naps2Config.Stub();
-        var service = new ZonalOcrService(ScanningContext, config, new ZonalOcrResultsStore(),
-            new LlmFieldNormalizer(config));
+        var service = new ZonalOcrService(ScanningContext, config, new ZonalOcrResultsStore());
         using var image = ScanningContext.CreateProcessedImage(LoadImage(ImageResources.image_upc_barcode));
         var template = new OcrZoneTemplate
         {
@@ -44,8 +43,7 @@ public class ZonalOcrServiceTests : ContextualTests
     public async Task BarcodeZoneUsesAnyFormatByDefault()
     {
         var config = Naps2Config.Stub();
-        var service = new ZonalOcrService(ScanningContext, config, new ZonalOcrResultsStore(),
-            new LlmFieldNormalizer(config));
+        var service = new ZonalOcrService(ScanningContext, config, new ZonalOcrResultsStore());
         using var image = ScanningContext.CreateProcessedImage(LoadImage(ImageResources.image_upc_barcode));
         var template = new OcrZoneTemplate
         {
@@ -72,8 +70,7 @@ public class ZonalOcrServiceTests : ContextualTests
     public async Task BarcodeZoneReturnsEmptyWhenNoBarcodeIsFound()
     {
         var config = Naps2Config.Stub();
-        var service = new ZonalOcrService(ScanningContext, config, new ZonalOcrResultsStore(),
-            new LlmFieldNormalizer(config));
+        var service = new ZonalOcrService(ScanningContext, config, new ZonalOcrResultsStore());
         using var image = ScanningContext.CreateProcessedImage(LoadImage(ImageResources.dog));
         var template = new OcrZoneTemplate
         {
@@ -101,8 +98,7 @@ public class ZonalOcrServiceTests : ContextualTests
     {
         var config = Naps2Config.Stub();
         SetUpFakeOcr(ifNoMatch: "printed value", delay: 0);
-        var service = new ZonalOcrService(ScanningContext, config, new ZonalOcrResultsStore(),
-            new LlmFieldNormalizer(config));
+        var service = new ZonalOcrService(ScanningContext, config, new ZonalOcrResultsStore());
         using var image = ScanningContext.CreateProcessedImage(LoadImage(ImageResources.dog));
         var template = new OcrZoneTemplate
         {
@@ -128,8 +124,7 @@ public class ZonalOcrServiceTests : ContextualTests
     public async Task MalformedZoneWithZeroDimensionsProducesEmptyField()
     {
         var config = Naps2Config.Stub();
-        var service = new ZonalOcrService(ScanningContext, config, new ZonalOcrResultsStore(),
-            new LlmFieldNormalizer(config));
+        var service = new ZonalOcrService(ScanningContext, config, new ZonalOcrResultsStore());
         using var image = ScanningContext.CreateProcessedImage(LoadImage(ImageResources.image_upc_barcode));
         var template = new OcrZoneTemplate
         {
@@ -158,8 +153,7 @@ public class ZonalOcrServiceTests : ContextualTests
     public async Task MalformedZoneWithNegativeDimensionsProducesEmptyField()
     {
         var config = Naps2Config.Stub();
-        var service = new ZonalOcrService(ScanningContext, config, new ZonalOcrResultsStore(),
-            new LlmFieldNormalizer(config));
+        var service = new ZonalOcrService(ScanningContext, config, new ZonalOcrResultsStore());
         using var image = ScanningContext.CreateProcessedImage(LoadImage(ImageResources.image_upc_barcode));
         var template = new OcrZoneTemplate
         {
@@ -188,8 +182,7 @@ public class ZonalOcrServiceTests : ContextualTests
     public async Task MalformedZoneWithOutOfRangeOriginProducesEmptyField()
     {
         var config = Naps2Config.Stub();
-        var service = new ZonalOcrService(ScanningContext, config, new ZonalOcrResultsStore(),
-            new LlmFieldNormalizer(config));
+        var service = new ZonalOcrService(ScanningContext, config, new ZonalOcrResultsStore());
         using var image = ScanningContext.CreateProcessedImage(LoadImage(ImageResources.image_upc_barcode));
         // Left > 1 means the zone starts past the right edge of the image; nothing to decode.
         var template = new OcrZoneTemplate
@@ -220,8 +213,7 @@ public class ZonalOcrServiceTests : ContextualTests
     {
         // Zone extends past the right/bottom edge. The visible portion should still be decoded.
         var config = Naps2Config.Stub();
-        var service = new ZonalOcrService(ScanningContext, config, new ZonalOcrResultsStore(),
-            new LlmFieldNormalizer(config));
+        var service = new ZonalOcrService(ScanningContext, config, new ZonalOcrResultsStore());
         using var image = ScanningContext.CreateProcessedImage(LoadImage(ImageResources.image_upc_barcode));
         // Width = 2.0 → clamped to 1.0, then further clipped to (1.0 - Left) of the image.
         // The barcode is centred in this image so a left-anchored over-wide zone still covers it.
@@ -255,8 +247,7 @@ public class ZonalOcrServiceTests : ContextualTests
         // The first zone is malformed (zero size); the second is a valid barcode zone.
         // Both fields must be present: first is empty, second carries the decoded value.
         var config = Naps2Config.Stub();
-        var service = new ZonalOcrService(ScanningContext, config, new ZonalOcrResultsStore(),
-            new LlmFieldNormalizer(config));
+        var service = new ZonalOcrService(ScanningContext, config, new ZonalOcrResultsStore());
         using var image = ScanningContext.CreateProcessedImage(LoadImage(ImageResources.image_upc_barcode));
         var template = new OcrZoneTemplate
         {
@@ -305,8 +296,7 @@ public class ZonalOcrServiceTests : ContextualTests
             .Returns<Task<OcrResult?>>(_ => throw new InvalidOperationException("simulated engine crash"));
         ScanningContext.OcrEngine = ocrMock;
 
-        var service = new ZonalOcrService(ScanningContext, config, new ZonalOcrResultsStore(),
-            new LlmFieldNormalizer(config));
+        var service = new ZonalOcrService(ScanningContext, config, new ZonalOcrResultsStore());
         using var image = ScanningContext.CreateProcessedImage(LoadImage(ImageResources.image_upc_barcode));
         var template = new OcrZoneTemplate
         {
@@ -359,8 +349,7 @@ public class ZonalOcrServiceTests : ContextualTests
         config.User.Set(c => c.OcrZoneTemplates,
             ImmutableList.Create(new OcrZoneTemplate { Name = "Invoices" }));
         config.User.Set(c => c.ActiveOcrZoneTemplateName, "invoices");
-        var service = new ZonalOcrService(ScanningContext, config, new ZonalOcrResultsStore(),
-            new LlmFieldNormalizer(config));
+        var service = new ZonalOcrService(ScanningContext, config, new ZonalOcrResultsStore());
 
         var activeTemplate = service.GetActiveTemplate();
 

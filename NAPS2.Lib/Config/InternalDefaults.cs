@@ -68,8 +68,6 @@ public static class InternalDefaults
             ApplyToAllSelected = false,
             OcrZoneTemplates = ImmutableList<OcrZoneTemplate>.Empty,
             ActiveOcrZoneTemplateName = "",
-            EnableLlmFieldCleanup = false,
-            LlmModelPath = "",
             EnableHotFolder = false,
             HotFolderPath = "",
             HotFolderDestinationPath = "",
