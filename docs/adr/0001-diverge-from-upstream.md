@@ -12,3 +12,4 @@ NAPS2_filetree is a single-user fork that ships only as a portable Windows ZIP. 
 - The update checker is disabled, because accepting an upstream update would overwrite this fork.
 - `NAPS2.Escl.Server` stays in the repo only because the SDK tests use it as a fake scanner. The app no longer references it.
 - The AI filename tokens (`DOC_DATE`, `DOC_SENDER`, `DOC_TYPE`, `DOC_REF`) are removed together with the AI model.
+- `SixLabors.ImageSharp` stays at 3.1.11 despite six known advisories. The fixed 4.x line requires a Six Labors license key for Release builds, and the package is used only by `NAPS2.Sdk.Tests`, never by the shipped app. Revisit if ImageSharp ever enters the app.
