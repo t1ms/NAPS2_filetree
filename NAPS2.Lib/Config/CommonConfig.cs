@@ -165,9 +165,6 @@ public class CommonConfig
     [Common]
     public EsclSecurityPolicy EsclSecurityPolicy { get; set; }
 
-    [Common]
-    public string? EsclServerCertificatePath { get; set; }
-
     [App]
     public EventType EventLogging { get; set; }
 
@@ -212,9 +209,6 @@ public class CommonConfig
     
     [User]
     public bool ShowPageNumbers { get; set; }
-
-    [Common]
-    public bool DisableScannerSharing { get; set; }
 
     [User]
     public bool SidebarVisible { get; set; }

@@ -19,7 +19,6 @@ public class KeyboardShortcuts
     public string? BatchScan { get; set; }
 
     public string? Profiles { get; set; }
-    public string? ScannerSharing { get; set; }
     public string? Ocr { get; set; }
     public string? Import { get; set; }
 

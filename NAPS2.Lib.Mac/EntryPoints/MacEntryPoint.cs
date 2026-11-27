@@ -28,7 +28,9 @@ public static class MacEntryPoint
         {
             ["cli" or "console", ..] => ConsoleEntryPoint.Run(subArgs, new MacImagesModule(), new MacModule()),
             ["worker", ..] => MacWorkerEntryPoint.Run(subArgs),
-            ["server", ..] => ServerEntryPoint.Run(subArgs, new MacImagesModule(), new MacModule()),
+            // Scanner sharing was removed from this fork. A startup shortcut created by an older
+            // build still passes "server"; exit quietly instead of opening the main window.
+            ["server", ..] => 0,
             _ => GuiEntryPoint.Run(args, new MacImagesModule(), new MacModule())
         };
     }

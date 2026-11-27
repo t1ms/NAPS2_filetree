@@ -46,11 +46,6 @@ public class DesktopCommands
             Text = UiStrings.BatchScan,
             IconName = "application_cascade_small"
         };
-        ScannerSharing = new ActionCommand(desktopSubFormController.ShowScannerSharingForm)
-        {
-            Text = UiStrings.ScannerSharing,
-            IconName = "wireless_small"
-        };
         Profiles = new ActionCommand(desktopSubFormController.ShowProfilesForm)
         {
             Text = UiStrings.Profiles,
@@ -398,7 +393,6 @@ public class DesktopCommands
     public ActionCommand Scan { get; set; }
     public ActionCommand NewProfile { get; set; }
     public ActionCommand BatchScan { get; set; }
-    public ActionCommand ScannerSharing { get; set; }
     public ActionCommand Profiles { get; set; }
     public ActionCommand Ocr { get; set; }
     public ActionCommand Import { get; set; }

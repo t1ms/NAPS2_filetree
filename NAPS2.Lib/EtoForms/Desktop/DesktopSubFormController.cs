@@ -151,12 +151,6 @@ public class DesktopSubFormController : IDesktopSubFormController
         form.ShowModal();
     }
 
-    public void ShowScannerSharingForm()
-    {
-        var form = _formFactory.Create<ScannerSharingForm>();
-        form.ShowModal();
-    }
-
     public void ShowViewerForm()
     {
         var selected = Selection.FirstOrDefault();

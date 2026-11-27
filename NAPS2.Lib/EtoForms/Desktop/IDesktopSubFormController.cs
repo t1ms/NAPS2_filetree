@@ -19,7 +19,6 @@ public interface IDesktopSubFormController
     void ShowSearchForm();
     void ShowDocumentIndexForm();
     void ShowBatchScanForm();
-    void ShowScannerSharingForm();
     void ShowViewerForm();
     void ShowPdfSettingsForm();
     void ShowImageSettingsForm();

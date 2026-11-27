@@ -9,7 +9,6 @@ using NAPS2.Pdf;
 using NAPS2.Platform.Windows;
 using NAPS2.Recovery;
 using NAPS2.Remoting;
-using NAPS2.Remoting.Server;
 using NAPS2.Remoting.Worker;
 using NAPS2.Scan;
 using NAPS2.Scan.Internal;
@@ -54,11 +53,6 @@ public class CommonModule : Module
 
         // Remoting
         builder.Register<IWorkerFactory>(_ => WorkerFactory.CreateDefault()).SingleInstance();
-        builder.Register<ISharedDeviceManager>(ctx =>
-            new SharedDeviceManager(
-                ctx.Resolve<ScanningContext>(),
-                ctx.Resolve<Naps2Config>(),
-                Path.Combine(Paths.AppData, "sharing.xml"))).SingleInstance();
         builder.RegisterInstance(ProcessCoordinator.CreateDefault());
 
         // Logging

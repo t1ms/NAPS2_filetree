@@ -100,7 +100,6 @@ public class DesktopKeyboardShortcuts
         _ksm.Assign(ks.PDFSettings, commands.PdfSettings);
         _ksm.Assign(ks.ImageSettings, commands.ImageSettings);
         _ksm.Assign(ks.ScanDefault, commands.Scan);
-        _ksm.Assign(ks.ScannerSharing, commands.ScannerSharing);
 
         _ksm.Assign(ks.ZoomIn, commands.ZoomIn);
         _ksm.Assign(ks.ZoomOut, commands.ZoomOut);

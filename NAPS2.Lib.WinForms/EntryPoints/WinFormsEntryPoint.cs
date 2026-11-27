@@ -17,7 +17,9 @@ public static class WinFormsEntryPoint
         return args switch
         {
             ["worker", ..] => WindowsNativeWorkerEntryPoint.Run(subArgs),
-            ["server", ..] => ServerEntryPoint.Run(subArgs, new GdiModule(), new WinFormsModule()),
+            // Scanner sharing was removed from this fork. A startup shortcut created by an older
+            // build still passes "server"; exit quietly instead of opening the main window.
+            ["server", ..] => 0,
             _ => GuiEntryPoint.Run(args, new GdiModule(), new WinFormsModule())
         };
     }

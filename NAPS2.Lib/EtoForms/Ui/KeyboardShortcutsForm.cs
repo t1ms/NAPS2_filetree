@@ -28,7 +28,6 @@ public class KeyboardShortcutsForm : EtoDialogBase
         new(UiStrings.BatchScan, c => c.KeyboardShortcuts.BatchScan),
         Shortcut.Separator,
         new(UiStrings.Profiles, c => c.KeyboardShortcuts.Profiles),
-        new(UiStrings.ScannerSharing, c => c.KeyboardShortcuts.ScannerSharing),
         new(UiStrings.Ocr, c => c.KeyboardShortcuts.Ocr),
         new(UiStrings.Import, c => c.KeyboardShortcuts.Import),
         Shortcut.Separator,

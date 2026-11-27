@@ -26,7 +26,6 @@ public class ProfilesForm : EtoDialogBase
     private readonly ActionCommand _setDefaultCommand;
     private readonly ActionCommand _copyCommand;
     private readonly ActionCommand _pasteCommand;
-    private readonly ActionCommand _scannerSharingCommand;
 
     public ProfilesForm(Naps2Config config, IScanPerformer scanPerformer, ProfileNameTracker profileNameTracker,
         IProfileManager profileManager, ProfileListViewBehavior profileListViewBehavior,
@@ -85,11 +84,6 @@ public class ProfilesForm : EtoDialogBase
         {
             MenuText = UiStrings.Paste
         };
-        _scannerSharingCommand = new ActionCommand(OpenScannerSharingForm)
-        {
-            MenuText = UiStrings.ScannerSharing,
-            IconName = "wireless_small"
-        };
 
         var profilesKsm = new KeyboardShortcutManager();
         profilesKsm.Assign("Esc", Close);
@@ -144,10 +138,7 @@ public class ProfilesForm : EtoDialogBase
                         C.Button(_addCommand, ButtonImagePosition.Left),
                         C.Button(_editCommand, ButtonImagePosition.Left),
                         C.Button(_deleteCommand, ButtonImagePosition.Left),
-                        C.Filler(),
-                        Config.Get(c => c.DisableScannerSharing)
-                            ? C.None()
-                            : C.Button(_scannerSharingCommand, ButtonImagePosition.Left)
+                        C.Filler()
                     )
                 ),
                 C.CancelButton(this, UiStrings.Done)
@@ -368,11 +359,5 @@ public class ProfilesForm : EtoDialogBase
             var profile = data.ScanProfileXml.FromXml<ScanProfile>();
             _profileManager.Mutate(new ListMutation<ScanProfile>.AppendAndSelect(profile), _listView);
         }
-    }
-
-    private void OpenScannerSharingForm()
-    {
-        var form = FormFactory.Create<ScannerSharingForm>();
-        form.ShowModal();
     }
 }

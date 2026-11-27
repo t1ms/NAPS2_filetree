@@ -302,8 +302,7 @@ public abstract class DesktopForm : EtoFormBase
                 .Dynamic(_scanMenuCommands)
                 .Separator()
                 .Append(Commands.NewProfile)
-                .Append(Commands.BatchScan)
-                .Append(Config.Get(c => c.DisableScannerSharing) ? null : Commands.ScannerSharing));
+                .Append(Commands.BatchScan));
         if (!hiddenButtons.HasFlag(ToolbarButtons.Profiles))
             CreateToolbarButton(Commands.Profiles);
         if (!hiddenButtons.HasFlag(ToolbarButtons.Ocr))

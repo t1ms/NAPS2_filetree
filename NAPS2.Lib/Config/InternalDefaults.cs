@@ -159,7 +159,6 @@ public static class InternalDefaults
                 NewProfile = "Mod+N",
                 BatchScan = "Mod+B",
                 Profiles = "Mod+L",
-                ScannerSharing = "Mod+G",
                 Ocr = "Mod+Alt+O",
                 Import = "Mod+O",
                 SavePDF = "",
