@@ -2,6 +2,7 @@
 
     <PropertyGroup>
         <TargetFrameworks>net6;net8;net8-macos</TargetFrameworks>
+        <TargetFrameworks Condition="'$(SkipMacTarget)' == 'true'">net6;net8</TargetFrameworks>
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <CheckEolTargetFramework>false</CheckEolTargetFramework>

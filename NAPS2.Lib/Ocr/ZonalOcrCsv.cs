@@ -1,11 +1,9 @@
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace NAPS2.Ocr;
 
 /// <summary>
-/// Helpers for exporting zonal OCR results to CSV and for substituting {FieldName}
-/// placeholders in file name patterns.
+/// Helpers for exporting zonal OCR results to CSV.
 /// </summary>
 public static class ZonalOcrCsv
 {
@@ -56,36 +54,5 @@ public static class ZonalOcrCsv
             return "\"" + cell.Replace("\"", "\"\"") + "\"";
         }
         return cell;
-    }
-
-    /// <summary>
-    /// Replaces {FieldName} placeholders in a file path pattern with sanitized extracted values.
-    /// </summary>
-    public static string SubstituteFields(string path, IEnumerable<ZonalOcrField> fields)
-    {
-        foreach (var field in fields)
-        {
-            if (string.IsNullOrWhiteSpace(field.Name))
-            {
-                continue;
-            }
-            path = Regex.Replace(path, Regex.Escape("{" + field.Name + "}"),
-                SanitizeForFileName(field.Value).Replace("$", "$$"), RegexOptions.IgnoreCase);
-        }
-        return path;
-    }
-
-    // Fixed (Windows) set so behavior is consistent across platforms
-    private static readonly char[] InvalidFileNameChars = { '\\', '/', ':', '*', '?', '"', '<', '>', '|' };
-
-    private static string SanitizeForFileName(string value)
-    {
-        var sb = new StringBuilder();
-        foreach (char c in value)
-        {
-            sb.Append(InvalidFileNameChars.Contains(c) || char.IsControl(c) ? '_' : c);
-        }
-        var result = Regex.Replace(sb.ToString(), @"\s+", " ").Trim();
-        return result.Length == 0 ? "blank" : result;
     }
 }

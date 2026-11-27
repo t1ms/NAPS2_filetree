@@ -31,13 +31,15 @@ NAPS2 is an open-source, cross-platform document scanning application written in
 Requires .NET 9 SDK (installed via Replit module `dotnet-9.0`; `global.json` pinned to `9.0.100` with `rollForward: latestFeature`).
 
 ```bash
-dotnet publish NAPS2.App.WinForms -r win-x64 -c Release --self-contained true /p:DebugType=None /p:DebugSymbols=false
-dotnet publish NAPS2.App.Worker -c Release /p:DebugType=None /p:DebugSymbols=false   # win-x86 single-file 32-bit TWAIN worker
+dotnet publish NAPS2.App.WinForms -r win-x64 -c Release-Zip --self-contained true /p:DebugType=None /p:DebugSymbols=false
+dotnet publish NAPS2.App.Worker -c Release-Zip /p:DebugType=None /p:DebugSymbols=false   # win-x86 single-file 32-bit TWAIN worker
 ```
+
+Use `-c Release-Zip`, not `-c Release`. Only `Release-Zip` makes the app keep its settings, search index and templates in the portable `Data/` folder. A plain `Release` build writes them to `%APPDATA%\NAPS2` on the host machine instead.
 
 Then assemble: copy the WinForms publish dir to `App/`, drop `NAPS2.Worker.exe` next to `NAPS2.exe`, add an empty `Data/` folder alongside `App/`, and zip. `_win32/twaindsm.dll`, `_win64/twaindsm.dll`, appsettings.xml, Pdfium and Tesseract all come through the publish output automatically. `NAPS2.Portable.exe` (net462 launcher) cannot be built on Linux — run `App/NAPS2.exe` directly.
 
-Output produced: `naps2-portable-win64.zip` (repo root).
+Output: `naps2-portable-win64.zip`. Don't commit it; attach it to a GitHub Release instead (`gh release upload <tag> naps2-portable-win64.zip`).
 
 ### Official tooling (Windows only)
 
@@ -58,9 +60,9 @@ The ZIP contains:
 **Alternatively**, a single self-contained EXE publish (experimental):
 ```bash
 dotnet publish NAPS2.App.WinForms/NAPS2.App.WinForms.csproj \
-  -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
+  -c Release-Zip -r win-x64 --self-contained true -p:PublishSingleFile=true
 ```
-Output: `NAPS2.App.WinForms/bin/Release/net9-windows/win-x64/publish/NAPS2.exe`
+Output: `NAPS2.App.WinForms/bin/Release-Zip/net9-windows/win-x64/publish/NAPS2.exe`
 
 > **Note:** The ZIP approach is more reliable — the single-file EXE still needs the Worker.exe alongside it for 32-bit TWAIN scanners.
 
