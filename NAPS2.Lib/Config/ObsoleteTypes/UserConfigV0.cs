@@ -1,5 +1,4 @@
 using System.Xml.Serialization;
-using NAPS2.ImportExport.Email;
 using NAPS2.ImportExport.Images;
 using NAPS2.Pdf;
 using NAPS2.Ocr;
@@ -40,10 +39,6 @@ public class UserConfigV0
     public PdfSettings PdfSettings { get; set; } = new();
 
     public ImageSettings ImageSettings { get; set; } = new();
-
-    public EmailSettings EmailSettings { get; set; } = new();
-
-    public EmailSetup EmailSetup { get; set; } = new();
 
     public int ThumbnailSize { get; set; } = ThumbnailSizes.DEFAULT_SIZE;
 

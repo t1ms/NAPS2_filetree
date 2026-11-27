@@ -136,48 +136,7 @@ This shows the extracted values and provides CSV export.
 
 ---
 
-## 3. Optional local AI cleanup
-
-The local AI model cleans noisy OCR values. It is optional and is not required
-for scanning or OCR.
-
-### Choose and enable a model
-
-1. Open a page with an OCR field template.
-2. Open **Image → OCR Field Zones**.
-3. Enable:
-
-   ```text
-   Clean up field values with a local AI model (CPU-only, .gguf)
-   ```
-
-4. Click **Choose Model...**.
-5. Select a compatible `.gguf` model.
-6. Save the template.
-
-You can also place a `.gguf` file in the application's local models folder
-shown by the dialog.
-
-No model is bundled or downloaded automatically. If no model is available,
-NAPS2 keeps the original OCR result instead of preventing the scan.
-
-### Per-field prompts
-
-Select a zone and enter an optional prompt. The special placeholder
-`{FieldType}` is replaced with the zone name.
-
-Use prompts for fields that need specific cleanup, for example:
-
-```text
-Return only the invoice number, with no label or explanation.
-```
-
-Small CPU-only models are useful for simple cleanup but can be less accurate on
-complex documents.
-
----
-
-## 4. Content-based automatic filenames
+## 3. Content-based automatic filenames
 
 Content-based filenames are configured through a profile's Auto Save settings.
 
@@ -228,34 +187,16 @@ The older syntax is also accepted:
 {Vendor}_{InvoiceNumber}.pdf
 ```
 
-### Generic document placeholders
-
-These can be filled by whole-page local AI extraction when a compatible model
-is enabled:
-
-```text
-$(DOC_DATE)
-$(DOC_SENDER)
-$(DOC_TYPE)
-$(DOC_REF)
-```
-
-Example:
-
-```text
-$(DOC_DATE)_$(DOC_SENDER)_$(DOC_TYPE)_$(DOC_REF).pdf
-```
-
 If a value is missing, NAPS2 uses a safe fallback such as `Unknown`. Unsafe
 Windows filename characters are removed, long values are shortened, and
 existing filenames receive a numeric suffix instead of being overwritten.
 
 ---
 
-## 5. Search scanned documents
+## 4. Search scanned documents
 
-Saved PDF/image documents are added to the local full-text search index when
-the save path supports indexing.
+Saved PDF documents are added to the local full-text search index. Images saved
+as JPEG, PNG or TIFF are not indexed.
 
 Open:
 
@@ -282,7 +223,7 @@ Search is local; documents are not uploaded to a cloud service.
 
 ---
 
-## 6. Hot Folder automatic processing
+## 5. Hot Folder automatic processing
 
 Hot Folder mode watches a folder while NAPS2 is open. New PDF and image files
 are imported, processed, auto-named, saved, and then moved out of the input
@@ -355,7 +296,7 @@ service.
 
 ---
 
-## 7. Thumbnail and preview behavior
+## 6. Thumbnail and preview behavior
 
 The main page list uses smaller thumbnails. The double-click viewer renders the
 full page separately.
@@ -394,13 +335,11 @@ Use this order to isolate problems:
 6. Configure Auto Save with a simple date/number pattern.
 7. Save a document and test **Image → Search Scanned Documents**.
 8. Configure Hot Folder and copy one existing PDF into it.
-9. Add a local GGUF model only after the non-AI path works.
 
 ## Current limitations
 
 - The portable package must be tested on Windows; the build environment cannot
   exercise Kodak TWAIN or WinForms rendering directly.
-- Local AI is optional and requires a user-provided compatible GGUF file.
 - Hot Folder mode stops when NAPS2 closes.
-- Complex documents may need a larger local model or carefully written zone
-  prompts for reliable field cleanup.
+- Field values are the raw OCR text from each zone. Draw zones tightly around
+  the value you want so labels and nearby text aren't included.

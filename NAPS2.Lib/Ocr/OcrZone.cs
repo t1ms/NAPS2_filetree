@@ -38,12 +38,6 @@ public class OcrZone
     public double Height { get; set; }
 
     /// <summary>
-    /// Optional per-zone prompt template for LLM field cleanup. "{FieldType}" is replaced with
-    /// the zone name. If null/empty, the default prompt template is used.
-    /// </summary>
-    public string? LlmPrompt { get; set; }
-
-    /// <summary>
     /// Controls whether this zone is read as printed text or as a barcode. This defaults to text
     /// so templates saved before barcode zones were added continue to work unchanged.
     /// </summary>

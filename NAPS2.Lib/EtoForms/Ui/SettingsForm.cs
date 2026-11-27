@@ -21,7 +21,6 @@ internal class SettingsForm : EtoDialogBase
     private readonly CheckBox _singleInstance = C.CheckBox(UiStrings.SingleInstanceDesc);
     private readonly ActionCommand _pdfSettingsCommand;
     private readonly ActionCommand _imageSettingsCommand;
-    private readonly ActionCommand _emailSettingsCommand;
     private readonly ActionCommand _keyboardShortcutsCommand;
     private readonly ActionCommand _hotFolderSettingsCommand;
     private readonly Button _restoreDefaults = new() { Text = UiStrings.RestoreDefaults };
@@ -49,11 +48,6 @@ internal class SettingsForm : EtoDialogBase
         {
             Text = UiStrings.ImageSettings,
             Image = iconProvider.GetIcon("picture_small")
-        };
-        _emailSettingsCommand = new ActionCommand(desktopSubFormController.ShowEmailSettingsForm)
-        {
-            Text = UiStrings.EmailSettings,
-            Image = iconProvider.GetIcon("email_small")
         };
         _keyboardShortcutsCommand = new ActionCommand(() => FormFactory.Create<KeyboardShortcutsForm>().ShowModal())
         {
@@ -110,8 +104,7 @@ internal class SettingsForm : EtoDialogBase
             // TODO: Probably only show these after we start adding tabs
             // L.Row(
             //     C.Button(_pdfSettingsCommand, ButtonImagePosition.Left),
-            //     C.Button(_imageSettingsCommand, ButtonImagePosition.Left),
-            //     C.Button(_emailSettingsCommand, ButtonImagePosition.Left)),
+            //     C.Button(_imageSettingsCommand, ButtonImagePosition.Left)),
             L.Row(C.Button(_hotFolderSettingsCommand, ButtonImagePosition.Left)),
             C.Filler(),
             L.Row(

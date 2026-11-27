@@ -123,7 +123,6 @@ public class ConfigSerializer : VersionedSerializer<ConfigStorage<CommonConfig>>
         storage.Set(x => x.OcrMode, c.OcrDefaultMode);
         storage.Set(x => x.OcrAfterScanning, c.OcrDefaultAfterScanning);
         storage.Set(x => x.EsclSecurityPolicy, c.EsclSecurityPolicy);
-        storage.Set(x => x.EsclServerCertificatePath, c.EsclServerCertificatePath);
         storage.Set(x => x.EventLogging, c.EventLogging);
         storage.Set(x => x.KeyboardShortcuts, MapKeyboardShortcuts(c.KeyboardShortcuts ?? new KeyboardShortcuts()));
         return storage;
@@ -147,10 +146,6 @@ public class ConfigSerializer : VersionedSerializer<ConfigStorage<CommonConfig>>
         if (c.NoDebugLogging)
         {
             storage.Set(x => x.EnableDebugLogging, false);
-        }
-        if (c.NoScannerSharing)
-        {
-            storage.Set(x => x.DisableScannerSharing, true);
         }
         if (c.EsclSecurityPolicy != EsclSecurityPolicy.None)
         {
@@ -229,8 +224,6 @@ public class ConfigSerializer : VersionedSerializer<ConfigStorage<CommonConfig>>
         storage.Set(x => x.LastImageExt, c.LastImageExt);
         storage.Set(x => x.PdfSettings, c.PdfSettings);
         storage.Set(x => x.ImageSettings, c.ImageSettings);
-        storage.Set(x => x.EmailSettings, c.EmailSettings);
-        storage.Set(x => x.EmailSetup, c.EmailSetup);
         storage.Set(x => x.ThumbnailSize, c.ThumbnailSize);
         if (c.LastBatchSettings != null)
         {

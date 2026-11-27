@@ -6,7 +6,6 @@ using NAPS2.Ocr;
 using NAPS2.Platform.Windows;
 using NAPS2.Recovery;
 using NAPS2.Remoting;
-using NAPS2.Remoting.Server;
 using NAPS2.Remoting.Worker;
 using NAPS2.Sdk.Tests;
 using NAPS2.Sdk.Tests.Asserts;
@@ -39,7 +38,6 @@ public class DesktopControllerTests : ContextualTests
     private readonly DesktopFormProvider _desktopFormProvider;
     private readonly IScannedImagePrinter _scannedImagePrinter;
     private readonly ThumbnailController _thumbnailController;
-    private readonly ISharedDeviceManager _sharedDeviceManager;
     private readonly ProcessCoordinator _processCoordinator;
 
     public DesktopControllerTests()
@@ -58,14 +56,12 @@ public class DesktopControllerTests : ContextualTests
         _exportHelper = Substitute.For<IExportController>();
         _dialogHelper = Substitute.For<DialogHelper>();
         _desktopImagesController = new DesktopImagesController(_imageList,
-            new ZonalOcrService(ScanningContext, _config, new ZonalOcrResultsStore(),
-                new LlmFieldNormalizer(_config)),
+            new ZonalOcrService(ScanningContext, _config, new ZonalOcrResultsStore()),
             new ZonalOcrResultsStore());
         _desktopScanController = Substitute.For<IDesktopScanController>();
         _desktopFormProvider = new DesktopFormProvider();
         _scannedImagePrinter = Substitute.For<IScannedImagePrinter>();
         _thumbnailController = new ThumbnailController(_thumbnailRenderQueue, _config);
-        _sharedDeviceManager = Substitute.For<ISharedDeviceManager>();
         _processCoordinator =
             new ProcessCoordinator(FolderPath, Guid.NewGuid().ToString("D"));
         ScanningContext.WorkerFactory = Substitute.For<IWorkerFactory>();
@@ -89,7 +85,6 @@ public class DesktopControllerTests : ContextualTests
             _desktopScanController,
             _desktopFormProvider,
             _scannedImagePrinter,
-            _sharedDeviceManager,
             _processCoordinator,
             new RecoveryManager(ScanningContext),
             Substitute.For<IFormFactory>(),

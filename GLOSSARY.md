@@ -13,8 +13,11 @@ The only shipped form of the app: a Windows folder you unzip and run, which keep
 _Avoid_: portable exe, installer
 
 **Scanner sharing**:
-The feature that lets this app act as a network scanner for other computers. Being removed.
+An upstream feature that let the app act as a network scanner for other computers. Removed from this fork.
 _Avoid_: eSCL (on its own, since eSCL also covers connecting to network scanners, which stays)
+
+**Network scanner**:
+A scanner the app reaches over the local network (eSCL), as opposed to one plugged in by USB.
 
 ## Reading text from scans
 

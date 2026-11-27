@@ -151,12 +151,6 @@ public class DesktopSubFormController : IDesktopSubFormController
         form.ShowModal();
     }
 
-    public void ShowScannerSharingForm()
-    {
-        var form = _formFactory.Create<ScannerSharingForm>();
-        form.ShowModal();
-    }
-
     public void ShowViewerForm()
     {
         var selected = Selection.FirstOrDefault();
@@ -176,11 +170,6 @@ public class DesktopSubFormController : IDesktopSubFormController
     public void ShowImageSettingsForm()
     {
         _formFactory.Create<ImageSettingsForm>().ShowModal();
-    }
-
-    public void ShowEmailSettingsForm()
-    {
-        _formFactory.Create<EmailSettingsForm>().ShowModal();
     }
 
     public void ShowSettingsForm()

@@ -9,7 +9,6 @@ using NAPS2.ImportExport.Images;
 using NAPS2.Platform.Windows;
 using NAPS2.Recovery;
 using NAPS2.Remoting;
-using NAPS2.Remoting.Server;
 using NAPS2.Scan;
 using NAPS2.Update;
 
@@ -34,7 +33,6 @@ public class DesktopController
     private readonly IDesktopScanController _desktopScanController;
     private readonly DesktopFormProvider _desktopFormProvider;
     private readonly IScannedImagePrinter _scannedImagePrinter;
-    private readonly ISharedDeviceManager _sharedDeviceManager;
     private readonly ProcessCoordinator _processCoordinator;
     private readonly RecoveryManager _recoveryManager;
     private readonly IFormFactory _formFactory;
@@ -55,7 +53,7 @@ public class DesktopController
         DialogHelper dialogHelper,
         DesktopImagesController desktopImagesController, IDesktopScanController desktopScanController,
         DesktopFormProvider desktopFormProvider, IScannedImagePrinter scannedImagePrinter,
-        ISharedDeviceManager sharedDeviceManager, ProcessCoordinator processCoordinator,
+        ProcessCoordinator processCoordinator,
         RecoveryManager recoveryManager, IFormFactory formFactory, IHotFolderService hotFolderService)
     {
         _scanningContext = scanningContext;
@@ -75,7 +73,6 @@ public class DesktopController
         _desktopScanController = desktopScanController;
         _desktopFormProvider = desktopFormProvider;
         _scannedImagePrinter = scannedImagePrinter;
-        _sharedDeviceManager = sharedDeviceManager;
         _processCoordinator = processCoordinator;
         _recoveryManager = recoveryManager;
         _formFactory = formFactory;
@@ -95,7 +92,6 @@ public class DesktopController
     {
         if (_initialized) return;
         _initialized = true;
-        _sharedDeviceManager.StartSharing();
         StartProcessCoordinator();
         ShowStartupMessages();
         ShowRecoveryPrompt();
@@ -194,7 +190,6 @@ public class DesktopController
         if (_suspended) return;
         _hotFolderService.Stop();
         _processCoordinator.KillServer();
-        _sharedDeviceManager.StopSharing();
         if (!SkipRecoveryCleanup && !_config.Get(c => c.KeepSession))
         {
             try
@@ -494,25 +489,6 @@ public class DesktopController
         }
     }
 
-    public async Task EmailPdf()
-    {
-        var action = _config.Get(c => c.SaveButtonDefaultAction);
-
-        if (action == SaveButtonDefaultAction.AlwaysPrompt
-            || action == SaveButtonDefaultAction.PromptIfSelected && _imageList.Selection.Any())
-        {
-            _desktopFormProvider.DesktopForm.ShowToolbarMenu(DesktopToolbarMenuType.EmailPdf);
-        }
-        else if (action == SaveButtonDefaultAction.SaveSelected && _imageList.Selection.Any())
-        {
-            await _imageListActions.EmailSelectedAsPdf();
-        }
-        else
-        {
-            await _imageListActions.EmailAllAsPdf();
-        }
-    }
-
     public async Task Print()
     {
         var state = _imageList.CurrentState;
@@ -596,13 +572,6 @@ public class DesktopController
             Invoker.Current.InvokeDispatch(async () =>
                 await controller._desktopScanController.ScanWithDevice(request.Device));
             return Task.FromResult(new Empty());
-        }
-
-        public override Task<StopSharingServerResponse> StopSharingServer(StopSharingServerRequest request,
-            ServerCallContext context)
-        {
-            controller._sharedDeviceManager.InvokeSharingServerStopped();
-            return Task.FromResult(new StopSharingServerResponse());
         }
     }
 }

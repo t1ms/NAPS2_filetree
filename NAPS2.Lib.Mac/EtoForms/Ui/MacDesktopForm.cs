@@ -73,13 +73,10 @@ public class MacDesktopForm : DesktopForm
                         Commands.SaveAll,
                         Commands.SaveSelected,
                         new SeparatorMenuItem(),
-                        Commands.EmailAll,
-                        Commands.EmailSelected,
                         Commands.Print,
                         new SeparatorMenuItem(),
                         Commands.PdfSettings,
                         Commands.ImageSettings,
-                        Commands.EmailSettings,
                         new SeparatorMenuItem(),
                         Commands.ClearAll
                     }
@@ -155,7 +152,6 @@ public class MacDesktopForm : DesktopForm
                     {
                         Commands.Profiles,
                         Commands.BatchScan,
-                        Commands.ScannerSharing,
                         Commands.Ocr
                     }
                 }

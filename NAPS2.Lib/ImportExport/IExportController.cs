@@ -8,5 +8,4 @@ public interface IExportController
     Task<bool> SavePdfByGroup(ISaveNotify notify, ICollection<UiImage>? sourceImages = null);
     Task<bool> SaveImages(ICollection<UiImage> uiImages, ISaveNotify notify);
     Task<bool> SavePdfOrImages(ICollection<UiImage> uiImages, ISaveNotify notify);
-    Task<bool> EmailPdf(ICollection<UiImage> uiImages);
 }

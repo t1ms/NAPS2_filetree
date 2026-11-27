@@ -70,7 +70,7 @@ public class ContentPlaceholdersTests
     public void FallbacksReplaceUnresolvedTokens()
     {
         var result = ContentPlaceholders.SubstituteFallbacks(
-            "$(DOC_SENDER)_$(DOC_REF).pdf", ContentPlaceholders.GenericTokenNames);
+            "$(Vendor)_$(InvoiceNumber).pdf", new[] { "Vendor", "InvoiceNumber" });
         Assert.Equal("Unknown_Unknown.pdf", result);
     }
 
@@ -78,7 +78,7 @@ public class ContentPlaceholdersTests
     public void FallbacksLeaveDatePlaceholdersAlone()
     {
         var result = ContentPlaceholders.SubstituteFallbacks(
-            "$(YYYY)-$(MM)-$(DD)_$(DOC_TYPE).pdf", ContentPlaceholders.GenericTokenNames);
+            "$(YYYY)-$(MM)-$(DD)_$(Vendor).pdf", new[] { "Vendor" });
         Assert.Equal("$(YYYY)-$(MM)-$(DD)_Unknown.pdf", result);
     }
 
@@ -93,11 +93,8 @@ public class ContentPlaceholdersTests
     [Fact]
     public void ContainsAnyTokenDetectsBothSyntaxes()
     {
-        Assert.True(ContentPlaceholders.ContainsAnyToken("$(DOC_DATE).pdf",
-            ContentPlaceholders.GenericTokenNames));
-        Assert.True(ContentPlaceholders.ContainsAnyToken("{doc_date}.pdf",
-            ContentPlaceholders.GenericTokenNames));
-        Assert.False(ContentPlaceholders.ContainsAnyToken("$(YYYY).pdf",
-            ContentPlaceholders.GenericTokenNames));
+        Assert.True(ContentPlaceholders.ContainsAnyToken("$(Vendor).pdf", new[] { "Vendor" }));
+        Assert.True(ContentPlaceholders.ContainsAnyToken("{vendor}.pdf", new[] { "Vendor" }));
+        Assert.False(ContentPlaceholders.ContainsAnyToken("$(YYYY).pdf", new[] { "Vendor" }));
     }
 }

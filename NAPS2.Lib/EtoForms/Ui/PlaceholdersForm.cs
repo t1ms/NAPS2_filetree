@@ -22,23 +22,6 @@ public class PlaceholdersForm : EtoDialogBase
             (Placeholders.NUMBER_1_DIGIT, UiStrings.AutoIncrementing1Digit)
         };
 
-    // Example values shown in the live preview for content-based tokens
-    private static readonly (string Name, string Example)[] GenericTokenExamples =
-    {
-        (ContentPlaceholders.DOC_DATE, "2026-08-03"),
-        (ContentPlaceholders.DOC_SENDER, "AcmeCorp"),
-        (ContentPlaceholders.DOC_TYPE, "Invoice"),
-        (ContentPlaceholders.DOC_REF, "4562")
-    };
-
-    private static readonly (string Name, string Description)[] GenericTokenDescriptions =
-    {
-        (ContentPlaceholders.DOC_DATE, "Document date (AI)"),
-        (ContentPlaceholders.DOC_SENDER, "Sender/vendor (AI)"),
-        (ContentPlaceholders.DOC_TYPE, "Document type (AI)"),
-        (ContentPlaceholders.DOC_REF, "Reference number (AI)")
-    };
-
     private readonly TextBox _fileName = new();
     private readonly Label _preview = new() { Text = " " };
 
@@ -110,7 +93,6 @@ public class PlaceholdersForm : EtoDialogBase
                 }
             }
         }
-        tokens.AddRange(GenericTokenDescriptions.Select(x => ((string, string)) x));
         return tokens;
     }
 
@@ -126,7 +108,6 @@ public class PlaceholdersForm : EtoDialogBase
                 .Where(z => !string.IsNullOrWhiteSpace(z.Name))
                 .Select(z => new ZonalOcrField(z.Name, "Example")));
         }
-        exampleFields.AddRange(GenericTokenExamples.Select(x => new ZonalOcrField(x.Name, x.Example)));
         return ContentPlaceholders.SubstituteFieldTokens(pattern, exampleFields);
     }
 

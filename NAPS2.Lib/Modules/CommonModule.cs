@@ -2,14 +2,12 @@ using Autofac;
 using Microsoft.Extensions.Logging;
 using NAPS2.EtoForms;
 using NAPS2.ImportExport;
-using NAPS2.ImportExport.Email;
 using NAPS2.ImportExport.Email.Mapi;
 using NAPS2.Ocr;
 using NAPS2.Pdf;
 using NAPS2.Platform.Windows;
 using NAPS2.Recovery;
 using NAPS2.Remoting;
-using NAPS2.Remoting.Server;
 using NAPS2.Remoting.Worker;
 using NAPS2.Scan;
 using NAPS2.Scan.Internal;
@@ -25,7 +23,6 @@ public class CommonModule : Module
     protected override void Load(ContainerBuilder builder)
     {
         // Export
-        builder.RegisterType<AutofacEmailProviderFactory>().As<IEmailProviderFactory>();
         builder.RegisterType<StubMapiWrapper>().As<IMapiWrapper>();
         builder.RegisterType<OcrRequestQueue>().AsSelf().SingleInstance();
 
@@ -54,11 +51,6 @@ public class CommonModule : Module
 
         // Remoting
         builder.Register<IWorkerFactory>(_ => WorkerFactory.CreateDefault()).SingleInstance();
-        builder.Register<ISharedDeviceManager>(ctx =>
-            new SharedDeviceManager(
-                ctx.Resolve<ScanningContext>(),
-                ctx.Resolve<Naps2Config>(),
-                Path.Combine(Paths.AppData, "sharing.xml"))).SingleInstance();
         builder.RegisterInstance(ProcessCoordinator.CreateDefault());
 
         // Logging
@@ -120,8 +112,6 @@ public class CommonModule : Module
         }).SingleInstance();
         builder.RegisterType<SearchIndexService>().AsSelf().SingleInstance();
         builder.RegisterType<ZonalOcrResultsStore>().AsSelf().SingleInstance();
-        builder.RegisterType<LlmFieldNormalizer>().AsSelf().SingleInstance();
-        builder.RegisterType<LlmDocumentExtractor>().AsSelf().SingleInstance();
         builder.RegisterType<ZonalOcrService>().AsSelf().SingleInstance();
         builder.Register<IOcrEngine>(ctx =>
         {

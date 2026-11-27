@@ -1,7 +1,6 @@
 using NAPS2.EtoForms;
 using NAPS2.EtoForms.Notifications;
 using NAPS2.EtoForms.Ui;
-using NAPS2.ImportExport.Email;
 using NAPS2.ImportExport.Images;
 using NAPS2.Pdf;
 
@@ -213,46 +212,6 @@ public class ExportController : IExportController
         return false;
     }
 
-    public async Task<bool> EmailPdf(ICollection<UiImage> uiImages)
-    {
-        using var images = GetSnapshots(uiImages);
-        if (!images.Any())
-        {
-            return false;
-        }
-
-        if (!_config.User.Has(c => c.EmailSetup.ProviderType))
-        {
-            // First email attempt; prompt for a provider
-            var form = _formFactory.Create<EmailProviderForm>();
-            Invoker.Current.Invoke(() => form.ShowModal());
-            if (!form.Result)
-            {
-                return false;
-            }
-        }
-
-        var invalidChars = new HashSet<char>(Path.GetInvalidFileNameChars());
-        var attachmentName = new string(_config.Get(c => c.EmailSettings.AttachmentName)
-            .Where(x => !invalidChars.Contains(x)).ToArray());
-        if (string.IsNullOrEmpty(attachmentName))
-        {
-            attachmentName = "Scan.pdf";
-        }
-        if (!attachmentName.EndsWith(".pdf", StringComparison.InvariantCultureIgnoreCase))
-        {
-            attachmentName += ".pdf";
-        }
-        attachmentName = Placeholders.All.Substitute(attachmentName, false);
-
-        if (await DoEmailPdf(images, attachmentName))
-        {
-            MaybeDeleteAfterSaving(uiImages);
-            return true;
-        }
-        return false;
-    }
-
     private async Task<bool> DoSavePdf(IList<ProcessedImage> images, ISaveNotify notify, string savePath)
     {
         var subSavePath = Placeholders.All.Substitute(savePath);
@@ -284,35 +243,13 @@ public class ExportController : IExportController
         return false;
     }
 
-    private async Task<bool> DoEmailPdf(IList<ProcessedImage> images, string attachmentName)
-    {
-        var tempFolder = new DirectoryInfo(Path.Combine(Paths.Temp, Path.GetRandomFileName()));
-        tempFolder.Create();
-        try
-        {
-            string targetPath = Path.Combine(tempFolder.FullName, attachmentName);
-            var state = _imageList.CurrentState;
-
-            if (await RunSavePdfOperation(targetPath, images, new EmailMessage()))
-            {
-                _imageList.MarkSaved(state, images);
-                return true;
-            }
-        }
-        finally
-        {
-            tempFolder.Delete(true);
-        }
-        return false;
-    }
-
     private async Task<bool> RunSavePdfOperation(string filename, IList<ProcessedImage> images,
-        EmailMessage? emailMessage = null, string? originalFilename = null)
+        string? originalFilename = null)
     {
         var op = _operationFactory.Create<SavePdfOperation>();
 
         if (op.Start(filename, Placeholders.All.WithDate(DateTime.Now), images, _config.Get(c => c.PdfSettings),
-                _config.DefaultOcrParams(), emailMessage, originalFilename ?? filename))
+                _config.DefaultOcrParams(), originalFilename ?? filename))
         {
             _operationProgress.ShowProgress(op);
         }

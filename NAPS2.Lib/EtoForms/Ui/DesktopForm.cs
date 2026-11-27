@@ -302,8 +302,7 @@ public abstract class DesktopForm : EtoFormBase
                 .Dynamic(_scanMenuCommands)
                 .Separator()
                 .Append(Commands.NewProfile)
-                .Append(Commands.BatchScan)
-                .Append(Config.Get(c => c.DisableScannerSharing) ? null : Commands.ScannerSharing));
+                .Append(Commands.BatchScan));
         if (!hiddenButtons.HasFlag(ToolbarButtons.Profiles))
             CreateToolbarButton(Commands.Profiles);
         if (!hiddenButtons.HasFlag(ToolbarButtons.Ocr))
@@ -324,13 +323,6 @@ public abstract class DesktopForm : EtoFormBase
                 .Append(Commands.SaveSelectedImages)
                 .Separator()
                 .Append(Commands.ImageSettings));
-        if (!hiddenButtons.HasFlag(ToolbarButtons.EmailPdf) && PlatformCompat.System.CanEmail)
-            CreateToolbarButtonWithMenu(Commands.EmailPdf, DesktopToolbarMenuType.EmailPdf, new MenuProvider()
-                .Append(Commands.EmailAll)
-                .Append(Commands.EmailSelected)
-                .Separator()
-                .Append(Commands.EmailSettings)
-                .Append(Commands.PdfSettings));
         if (!hiddenButtons.HasFlag(ToolbarButtons.Print) && PlatformCompat.System.CanPrint)
             CreateToolbarButton(Commands.Print);
         CreateToolbarSeparator();
@@ -539,19 +531,19 @@ public abstract class DesktopForm : EtoFormBase
                 Commands.Delete.Enabled = ImageList.Selection.Any();
         Commands.SavePdf.Enabled = Commands.SaveImages.Enabled = Commands.ClearAll.Enabled =
             Commands.ReorderMenu.Enabled =
-                Commands.EmailPdf.Enabled = Commands.Print.Enabled = ImageList.Images.Any();
+                Commands.Print.Enabled = ImageList.Images.Any();
 
         // "All" dropdown items
-        Commands.SaveAllPdf.Text = Commands.SaveAllImages.Text = Commands.EmailAll.Text =
+        Commands.SaveAllPdf.Text = Commands.SaveAllImages.Text =
             Commands.ReverseAll.Text = string.Format(MiscResources.AllCount, ImageList.Images.Count);
         Commands.SaveAllPdf.Enabled = Commands.SaveAllImages.Enabled = Commands.SaveAll.Enabled =
-            Commands.EmailAll.Enabled = Commands.ReverseAll.Enabled = ImageList.Images.Any();
+            Commands.ReverseAll.Enabled = ImageList.Images.Any();
 
         // "Selected" dropdown items
-        Commands.SaveSelectedPdf.Text = Commands.SaveSelectedImages.Text = Commands.EmailSelected.Text =
+        Commands.SaveSelectedPdf.Text = Commands.SaveSelectedImages.Text =
             Commands.ReverseSelected.Text = string.Format(MiscResources.SelectedCount, ImageList.Selection.Count);
         Commands.SaveSelectedPdf.Enabled = Commands.SaveSelectedImages.Enabled = Commands.SaveSelected.Enabled =
-            Commands.EmailSelected.Enabled = Commands.ReverseSelected.Enabled = ImageList.Selection.Any();
+            Commands.ReverseSelected.Enabled = ImageList.Selection.Any();
 
         // Other
         Commands.SelectAll.Enabled = ImageList.Images.Any();

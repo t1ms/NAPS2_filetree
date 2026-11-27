@@ -22,16 +22,13 @@ public class AutoSaver
     private readonly UiImageList _imageList;
     private readonly ZonalOcrService _zonalOcrService;
     private readonly SearchIndexService _searchIndexService;
-    private readonly LlmDocumentExtractor _llmDocumentExtractor;
 
     public AutoSaver(ErrorOutput errorOutput, DialogHelper dialogHelper,
         OperationProgress operationProgress, ISaveNotify notify, PdfExporter pdfExporter,
         IOverwritePrompt overwritePrompt, Naps2Config config, ImageContext imageContext, UiImageList imageList,
-        ZonalOcrService zonalOcrService, SearchIndexService searchIndexService,
-        LlmDocumentExtractor llmDocumentExtractor)
+        ZonalOcrService zonalOcrService, SearchIndexService searchIndexService)
     {
         _searchIndexService = searchIndexService;
-        _llmDocumentExtractor = llmDocumentExtractor;
         _errorOutput = errorOutput;
         _dialogHelper = dialogHelper;
         _operationProgress = operationProgress;
@@ -168,29 +165,9 @@ public class AutoSaver
             // Support $(FieldName) / {FieldName} placeholders in the auto-save file name pattern
             filePathPattern = ContentPlaceholders.SubstituteFieldTokens(filePathPattern, zonalResults[0].Fields);
         }
-        // If the pattern uses generic document tokens (DOC_DATE etc.) and the local LLM is set up,
-        // fill them from a whole-page extraction of the first page
-        if (ContentPlaceholders.ContainsAnyToken(filePathPattern, ContentPlaceholders.GenericTokenNames) &&
-            _llmDocumentExtractor.IsAvailable)
-        {
-            try
-            {
-                var genericFields =
-                    await _llmDocumentExtractor.ExtractGenericFields(images[0], CancellationToken.None);
-                if (genericFields != null)
-                {
-                    filePathPattern = ContentPlaceholders.SubstituteFieldTokens(filePathPattern, genericFields);
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.ErrorException("Error running LLM document extraction during auto save", ex);
-            }
-        }
-        // Any content tokens still unresolved (extraction unavailable/failed, or field not in this
-        // page's results) fall back to a safe default so they never leak into file names
-        var knownTokenNames = ContentPlaceholders.GenericTokenNames
-            .Concat(zonalResults.SelectMany(r => r.Fields.Select(f => f.Name)))
+        // Any zone tokens still unresolved (extraction failed, or field not in this page's results)
+        // fall back to a safe default so they never leak into file names
+        var knownTokenNames = zonalResults.SelectMany(r => r.Fields.Select(f => f.Name))
             .Concat(_zonalOcrService.GetActiveTemplate()?.Zones.Select(z => z.Name) ??
                     Enumerable.Empty<string>())
             .Where(name => !ContentPlaceholders.ReservedTokenNames.Contains(name));

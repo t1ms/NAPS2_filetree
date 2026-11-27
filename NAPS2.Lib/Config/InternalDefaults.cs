@@ -1,7 +1,5 @@
 using System.Collections.Immutable;
 using NAPS2.ImportExport;
-using NAPS2.ImportExport.Email;
-using NAPS2.ImportExport.Email.Oauth;
 using NAPS2.ImportExport.Images;
 using NAPS2.Ocr;
 using NAPS2.Pdf;
@@ -68,8 +66,6 @@ public static class InternalDefaults
             ApplyToAllSelected = false,
             OcrZoneTemplates = ImmutableList<OcrZoneTemplate>.Empty,
             ActiveOcrZoneTemplateName = "",
-            EnableLlmFieldCleanup = false,
-            LlmModelPath = "",
             EnableHotFolder = false,
             HotFolderPath = "",
             HotFolderDestinationPath = "",
@@ -113,26 +109,6 @@ public static class InternalDefaults
                 TiffCompression = TiffCompression.Auto
             },
             RememberImageSettings = false,
-            EmailSettings = new EmailSettings
-            {
-                AttachmentName = "Scan.pdf"
-            },
-            RememberEmailSettings = false,
-            EmailSetup = new EmailSetup
-            {
-                SystemProviderName = "",
-                ProviderType = EmailProviderType.System,
-                SmtpUser = "",
-                GmailUser = "",
-                OutlookWebToken = new OauthToken(),
-                SmtpHost = "",
-                GmailToken = new OauthToken(),
-                OutlookWebUser = "",
-                SmtpFrom = "",
-                SmtpPassword = "",
-                SmtpPort = 0,
-                SmtpTls = false
-            },
             BatchSettings = new BatchSettings
             {
                 OutputType = BatchOutputType.Load,
@@ -161,7 +137,6 @@ public static class InternalDefaults
                 NewProfile = "Mod+N",
                 BatchScan = "Mod+B",
                 Profiles = "Mod+L",
-                ScannerSharing = "Mod+G",
                 Ocr = "Mod+Alt+O",
                 Import = "Mod+O",
                 SavePDF = "",
@@ -172,10 +147,6 @@ public static class InternalDefaults
                 SaveImagesAll = "Mod+I",
                 SaveImagesSelected = "Mod+Shift+I",
                 ImageSettings = "Mod+Alt+I",
-                EmailPDF = "",
-                EmailPDFAll = "Mod+E",
-                EmailPDFSelected = "Mod+Shift+E",
-                EmailSettings = "Mod+Alt+E",
                 Print = "Mod+P",
                 ImageView = "",
                 ImageBlackWhite = "",

@@ -1,7 +1,6 @@
 using System.Collections.Immutable;
 using NAPS2.Config.Model;
 using NAPS2.Escl;
-using NAPS2.ImportExport.Email;
 using NAPS2.ImportExport.Images;
 using NAPS2.Pdf;
 using NAPS2.Ocr;
@@ -165,9 +164,6 @@ public class CommonConfig
     [Common]
     public EsclSecurityPolicy EsclSecurityPolicy { get; set; }
 
-    [Common]
-    public string? EsclServerCertificatePath { get; set; }
-
     [App]
     public EventType EventLogging { get; set; }
 
@@ -187,17 +183,6 @@ public class CommonConfig
 
     [Config]
     [Common]
-    public EmailSettings EmailSettings { get; set; } = new();
-
-    [User]
-    public bool RememberEmailSettings { get; set; }
-
-    [Config]
-    [Common]
-    public EmailSetup EmailSetup { get; set; } = new();
-
-    [Config]
-    [Common]
     public BatchSettings BatchSettings { get; set; } = new();
 
     [Config]
@@ -212,9 +197,6 @@ public class CommonConfig
     
     [User]
     public bool ShowPageNumbers { get; set; }
-
-    [Common]
-    public bool DisableScannerSharing { get; set; }
 
     [User]
     public bool SidebarVisible { get; set; }
@@ -236,12 +218,6 @@ public class CommonConfig
 
     [User]
     public string? ActiveOcrZoneTemplateName { get; set; }
-
-    [User]
-    public bool EnableLlmFieldCleanup { get; set; }
-
-    [User]
-    public string? LlmModelPath { get; set; }
 
     [User]
     public bool EnableHotFolder { get; set; }

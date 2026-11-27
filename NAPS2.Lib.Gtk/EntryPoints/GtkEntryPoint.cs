@@ -20,7 +20,9 @@ public static class GtkEntryPoint
         {
             ["cli" or "console", ..] => ConsoleEntryPoint.Run(subArgs, new GtkImagesModule(), new GtkModule()),
             ["worker", ..] => WorkerEntryPoint.Run(subArgs, new GtkImagesModule()),
-            ["server", ..] => ServerEntryPoint.Run(subArgs, new GtkImagesModule(), new GtkModule()),
+            // Scanner sharing was removed from this fork. A startup shortcut created by an older
+            // build still passes "server"; exit quietly instead of opening the main window.
+            ["server", ..] => 0,
             _ => GuiEntryPoint.Run(args, new GtkImagesModule(), new GtkModule())
         };
     }

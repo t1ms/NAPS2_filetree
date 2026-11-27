@@ -19,7 +19,6 @@ public class KeyboardShortcuts
     public string? BatchScan { get; set; }
 
     public string? Profiles { get; set; }
-    public string? ScannerSharing { get; set; }
     public string? Ocr { get; set; }
     public string? Import { get; set; }
 
@@ -32,11 +31,6 @@ public class KeyboardShortcuts
     public string? SaveImagesAll { get; set; }
     public string? SaveImagesSelected { get; set; }
     public string? ImageSettings { get; set; }
-
-    public string? EmailPDF { get; set; }
-    public string? EmailPDFAll { get; set; }
-    public string? EmailPDFSelected { get; set; }
-    public string? EmailSettings { get; set; }
 
     public string? Print { get; set; }
 
