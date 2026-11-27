@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2022, ubuntu-24.04, macos-15]
+        os: [windows-2022, ubuntu-24.04]
     steps:
     - name: Install OS dependencies
       if: matrix.os == 'ubuntu-24.04'
@@ -19,17 +19,10 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 9.0.x
-    - name: Install workloads
-      if: matrix.os == 'macos-15'
-      run: dotnet workload install macos
     - name: Build
       run: dotnet run --project NAPS2.Tools -- build debug -v
     - name: Test
-      if: matrix.os != 'macos-15'
       run: dotnet run --project NAPS2.Tools -- test -v --nogui
-    - name: Test (mac)
-      if: matrix.os == 'macos-15'
-      run: dotnet run --project NAPS2.Tools -- test -v --nogui --nonetwork
     - name: Test (WPF images)
       if: matrix.os == 'windows-2022'
       run: dotnet run --project NAPS2.Tools -- test -v --nogui --images wpf --scope sdk

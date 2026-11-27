@@ -7,6 +7,18 @@ This guide explains how to build NAPS2 from source. NAPS2 is built using .NET 8 
 Regardless of your operating system, you will need:
 1. **.NET 8.0 SDK** (Download from https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
 
+## Checking changes on an Apple Silicon Mac (no Mac app)
+
+This fork ships only the Windows portable ZIP. To build and run the unit tests on an Apple Silicon Mac without the `macos` workload:
+
+```bash
+dotnet build NAPS2.Lib.Tests/NAPS2.Lib.Tests.csproj -c Debug -p:SkipMacTarget=true -p:Protobuf_ProtocFullPath=/opt/homebrew/bin/protoc -p:gRPC_PluginFullPath=/opt/homebrew/bin/grpc_csharp_plugin
+dotnet test NAPS2.Lib.Tests/NAPS2.Lib.Tests.csproj -c Debug --no-build
+```
+
+- `SkipMacTarget=true` skips the `net8-macos` target, so the `macos` workload isn't needed.
+- The protoc paths point at Homebrew's tools (`brew install protobuf grpc`), because the Grpc.Tools package only includes an Intel Mac build of protoc.
+
 ## Building on macOS
 
 The macOS build produces a native `.app` bundle.

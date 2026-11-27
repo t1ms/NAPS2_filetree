@@ -89,8 +89,6 @@ public class AutoSaver
         return await InternalSave(settings, images, updateUiSavedState: false);
     }
 
-    internal static bool ShouldUpdateUiSavedStateForHotFolder() => false;
-
     private async Task<bool> InternalSave(AutoSaveSettings settings, List<ProcessedImage> images,
         bool updateUiSavedState = true)
     {

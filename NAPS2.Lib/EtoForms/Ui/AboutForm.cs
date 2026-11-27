@@ -84,15 +84,6 @@ public class AboutForm : EtoDialogBase
         );
     }
 
-    private LayoutElement GetUpdateWidget()
-    {
-#if MSI
-        return C.None();
-#else
-#if NET6_0_OR_GREATER
-        if (!OperatingSystem.IsWindows()) return C.None();
-#endif
-        return new UpdateCheckWidget(_updateChecker, Config);
-#endif
-    }
+    // Update checks are disabled in this fork, so the "Check for updates" option is hidden.
+    private LayoutElement GetUpdateWidget() => C.None();
 }
