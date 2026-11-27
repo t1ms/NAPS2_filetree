@@ -22,7 +22,6 @@ public interface IDesktopSubFormController
     void ShowViewerForm();
     void ShowPdfSettingsForm();
     void ShowImageSettingsForm();
-    void ShowEmailSettingsForm();
     void ShowAboutForm();
     void ShowSettingsForm();
     void ShowHotFolderSettingsForm();

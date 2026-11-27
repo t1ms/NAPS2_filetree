@@ -18,7 +18,6 @@
   <HideImportButton>false</HideImportButton>
   <HideSavePdfButton>false</HideSavePdfButton>
   <HideSaveImagesButton>false</HideSaveImagesButton>
-  <HideEmailButton>false</HideEmailButton>
   <HidePrintButton>false</HidePrintButton>
   <HideSettingsButton>false</HideSettingsButton>
   <HideDonateButton>false</HideDonateButton>
@@ -109,9 +108,6 @@
     <SaveImagesAll>Ctrl+I</SaveImagesAll>
     <SaveImagesSelected>Ctrl+Shift+I</SaveImagesSelected>
     <ImageSettings>Ctrl+Alt+I</ImageSettings>
-    <EmailPDFAll>Ctrl+E</EmailPDFAll>
-    <EmailPDFSelected>Ctrl+Shift+E</EmailPDFSelected>
-    <EmailSettings>Ctrl+Alt+E</EmailSettings>
     <Print>Ctrl+P</Print>
     <ImageView></ImageView>
     <ImageBlackWhite></ImageBlackWhite>

@@ -489,25 +489,6 @@ public class DesktopController
         }
     }
 
-    public async Task EmailPdf()
-    {
-        var action = _config.Get(c => c.SaveButtonDefaultAction);
-
-        if (action == SaveButtonDefaultAction.AlwaysPrompt
-            || action == SaveButtonDefaultAction.PromptIfSelected && _imageList.Selection.Any())
-        {
-            _desktopFormProvider.DesktopForm.ShowToolbarMenu(DesktopToolbarMenuType.EmailPdf);
-        }
-        else if (action == SaveButtonDefaultAction.SaveSelected && _imageList.Selection.Any())
-        {
-            await _imageListActions.EmailSelectedAsPdf();
-        }
-        else
-        {
-            await _imageListActions.EmailAllAsPdf();
-        }
-    }
-
     public async Task Print()
     {
         var state = _imageList.CurrentState;

@@ -2,7 +2,6 @@ using Autofac;
 using Microsoft.Extensions.Logging;
 using NAPS2.EtoForms;
 using NAPS2.ImportExport;
-using NAPS2.ImportExport.Email;
 using NAPS2.ImportExport.Email.Mapi;
 using NAPS2.Ocr;
 using NAPS2.Pdf;
@@ -24,7 +23,6 @@ public class CommonModule : Module
     protected override void Load(ContainerBuilder builder)
     {
         // Export
-        builder.RegisterType<AutofacEmailProviderFactory>().As<IEmailProviderFactory>();
         builder.RegisterType<StubMapiWrapper>().As<IMapiWrapper>();
         builder.RegisterType<OcrRequestQueue>().AsSelf().SingleInstance();
 

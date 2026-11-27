@@ -2,7 +2,6 @@
 using NAPS2.Dependencies;
 using NAPS2.EtoForms;
 using NAPS2.ImportExport;
-using NAPS2.ImportExport.Email;
 using NAPS2.ImportExport.Images;
 using NAPS2.Lang.ConsoleResources;
 using NAPS2.Ocr;
@@ -18,7 +17,6 @@ namespace NAPS2.Automation;
 internal class AutomatedScanning
 {
     private readonly ImageContext _imageContext;
-    private readonly IEmailProviderFactory _emailProviderFactory;
     private readonly IScanPerformer _scanPerformer;
     private readonly ErrorOutput _errorOutput;
     private readonly FileImporter _fileImporter;
@@ -44,7 +42,7 @@ internal class AutomatedScanning
     private PageDimensions? _pageDimensions;
 
     public AutomatedScanning(ConsoleOutput output, AutomatedScanningOptions options, ImageContext imageContext,
-        IScanPerformer scanPerformer, ErrorOutput errorOutput, IEmailProviderFactory emailProviderFactory,
+        IScanPerformer scanPerformer, ErrorOutput errorOutput,
         FileImporter fileImporter, IOperationFactory operationFactory,
         TesseractLanguageManager tesseractLanguageManager, IFormFactory formFactory, Naps2Config config,
         IProfileManager profileManager, RecoveryStorageManager recoveryStorageManager, ScanningContext scanningContext,
@@ -55,7 +53,6 @@ internal class AutomatedScanning
         _imageContext = imageContext;
         _scanPerformer = scanPerformer;
         _errorOutput = errorOutput;
-        _emailProviderFactory = emailProviderFactory;
         _fileImporter = fileImporter;
         _operationFactory = operationFactory;
         _tesseractLanguageManager = tesseractLanguageManager;
@@ -101,7 +98,7 @@ internal class AutomatedScanning
             if (_options.Install != null)
             {
                 await InstallComponents();
-                if (_options.OutputPath == null && _options.EmailFileName == null && !_options.AutoSave)
+                if (_options.OutputPath == null && !_options.AutoSave)
                 {
                     return;
                 }
@@ -150,11 +147,6 @@ internal class AutomatedScanning
             {
                 await ExportScannedImages();
             }
-
-            if (_options.EmailFileName != null)
-            {
-                await EmailScannedImages();
-            }
         }
         catch (ScanDriverException ex) when (ex is not ScanDriverUnknownException)
         {
@@ -192,7 +184,7 @@ internal class AutomatedScanning
             // Don't use OCR-enabled settings from the GUI if --noprofile is set
             _config.Run.Set(c => c.EnableOcr, false);
         }
-        bool canUseOcr = IsPdfFile(_options.OutputPath) || IsPdfFile(_options.EmailFileName);
+        bool canUseOcr = IsPdfFile(_options.OutputPath);
         if (!canUseOcr)
         {
             return;
@@ -309,7 +301,6 @@ internal class AutomatedScanning
     {
         if (_options.OutputPath == null)
         {
-            // Email, so no check needed
             return true;
         }
         var subPath = _placeholders.Substitute(_options.OutputPath);
@@ -382,117 +373,16 @@ internal class AutomatedScanning
         return image;
     }
 
-    private async Task EmailScannedImages()
-    {
-        if (_scanList.Count == 0)
-        {
-            _errorOutput.DisplayError(ConsoleResources.NoPagesToEmail);
-            return;
-        }
-
-
-        OutputVerbose(ConsoleResources.Emailing);
-
-        var message = new EmailMessage
-        {
-            Subject = _placeholders.Substitute(_options.EmailSubject, false) ?? "",
-            BodyText = _placeholders.Substitute(_options.EmailBody, false),
-            AutoSend = _options.EmailAutoSend,
-            SilentSend = _options.EmailSilentSend
-        };
-
-        message.Recipients.AddRange(EmailRecipient.FromText(EmailRecipientType.To, _options.EmailTo));
-        message.Recipients.AddRange(EmailRecipient.FromText(EmailRecipientType.Cc, _options.EmailCc));
-        message.Recipients.AddRange(EmailRecipient.FromText(EmailRecipientType.Bcc, _options.EmailBcc));
-
-        // TODO: We may want to normalize this to use SavePdfOperation's email functionality
-        var tempFolder = new DirectoryInfo(Path.Combine(Paths.Temp, Path.GetRandomFileName()));
-        tempFolder.Create();
-        try
-        {
-            string targetPath = Path.Combine(tempFolder.FullName, _options.EmailFileName!);
-            if (IsPdfFile(targetPath))
-            {
-                if (_options.OutputPath != null && IsPdfFile(_options.OutputPath))
-                {
-                    // The scan has already been exported to PDF, so use that file
-                    OutputVerbose(ConsoleResources.AttachingExportedPDF);
-                    int digits = (int) Math.Floor(Math.Log10(_scanList.Count)) + 1;
-                    int i = 0;
-                    foreach (var path in _actualOutputPaths)
-                    {
-                        string attachmentName = _placeholders.Substitute(_options.EmailFileName!, false, i++,
-                            _scanList.Count > 1 ? digits : 0);
-                        message.Attachments.Add(new EmailAttachment
-                        {
-                            FilePath = path,
-                            AttachmentName = attachmentName
-                        });
-                    }
-                }
-                else
-                {
-                    // The scan hasn't bee exported to PDF yet, so it needs to be exported to the temp folder
-                    OutputVerbose(ConsoleResources.ExportingPDFToAttach);
-                    if (!await DoExportToPdf(targetPath, true))
-                    {
-                        OutputVerbose(ConsoleResources.EmailNotSent);
-                        return;
-                    }
-                    // Attach the PDF file
-                    AttachFilesInFolder(tempFolder, message);
-                }
-            }
-            else
-            {
-                // Export the images to the temp folder
-                // Don't bother to re-use previously exported images, because the possible different formats and multiple files makes it non-trivial,
-                // and exporting is pretty cheap anyway
-                OutputVerbose(ConsoleResources.ExportingImagesToAttach);
-                await DoExportToImageFiles(targetPath);
-                // Attach the image file(s)
-                AttachFilesInFolder(tempFolder, message);
-            }
-
-            OutputVerbose(ConsoleResources.SendingEmail);
-            if (await _emailProviderFactory.Default.SendEmail(message, _cts.Token))
-            {
-                OutputVerbose(ConsoleResources.EmailSent);
-            }
-            else
-            {
-                OutputVerbose(ConsoleResources.EmailNotSent);
-            }
-        }
-        finally
-        {
-            tempFolder.Delete(true);
-        }
-    }
-
-    private void AttachFilesInFolder(DirectoryInfo folder, EmailMessage message)
-    {
-        foreach (var file in folder.EnumerateFiles().OrderBy(x => x.Name))
-        {
-            OutputVerbose(ConsoleResources.Attaching, file.Name);
-            message.Attachments.Add(new EmailAttachment
-            {
-                FilePath = file.FullName,
-                AttachmentName = file.Name
-            });
-        }
-    }
-
     public bool ValidateOptions()
     {
         // Most validation is done by the CommandLineParser library, but some constraints that can't be represented by that API need to be checked here
-        if (_options.OutputPath == null && _options.EmailFileName == null && _options.Install == null &&
+        if (_options.OutputPath == null && _options.Install == null &&
             !_options.AutoSave && !_options.ListDevices)
         {
             _errorOutput.DisplayError(ConsoleResources.OutputOrEmailRequired);
             return false;
         }
-        if (_options.OutputPath == null && _options.EmailFileName == null && _options.ImportPath != null)
+        if (_options.OutputPath == null && _options.ImportPath != null)
         {
             _errorOutput.DisplayError(ConsoleResources.OutputOrEmailRequiredForImport);
             return false;
@@ -619,10 +509,10 @@ internal class AutomatedScanning
 
     private async Task ExportToPdf()
     {
-        await DoExportToPdf(_options.OutputPath!, false);
+        await DoExportToPdf(_options.OutputPath!);
     }
 
-    private async Task<bool> DoExportToPdf(string path, bool email)
+    private async Task<bool> DoExportToPdf(string path)
     {
         var defaults = InternalDefaults.GetCommonConfig();
 
@@ -704,10 +594,7 @@ internal class AutomatedScanning
                 return false;
             }
             _actualOutputPaths.Add(actualPath);
-            if (!email)
-            {
-                OutputVerbose(ConsoleResources.SuccessfullySavedPdf, actualPath);
-            }
+            OutputVerbose(ConsoleResources.SuccessfullySavedPdf, actualPath);
         }
         return true;
     }
@@ -721,7 +608,7 @@ internal class AutomatedScanning
         if (_options.AutoSave && !autoSaveEnabled)
         {
             _errorOutput.DisplayError(ConsoleResources.AutoSaveNotEnabled);
-            if (_options.OutputPath == null && _options.EmailFileName == null)
+            if (_options.OutputPath == null)
             {
                 return;
             }

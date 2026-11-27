@@ -172,11 +172,6 @@ public class DesktopSubFormController : IDesktopSubFormController
         _formFactory.Create<ImageSettingsForm>().ShowModal();
     }
 
-    public void ShowEmailSettingsForm()
-    {
-        _formFactory.Create<EmailSettingsForm>().ShowModal();
-    }
-
     public void ShowSettingsForm()
     {
         _formFactory.Create<SettingsForm>().ShowModal();

@@ -145,8 +145,6 @@ public class ImageListActions
     public Task SaveAllAsPdfOrImages() => _exportController.SavePdfOrImages(_imageList.Images, _notify);
     public Task SaveSelectedAsPdfOrImages() => _exportController.SavePdfOrImages(_imageList.Selection, _notify);
     public Task SaveAllByGroupAsPdf() => _exportController.SavePdfByGroup(_notify);
-    public Task EmailAllAsPdf() => _exportController.EmailPdf(_imageList.Images);
-    public Task EmailSelectedAsPdf() => _exportController.EmailPdf(_imageList.Selection);
     
     public void EditWithApp() => _editWithController.EditWithApp(Selection ?? _imageList.Selection);
     public void EditWithPick() => _editWithController.EditWithPick(Selection ?? _imageList.Selection);

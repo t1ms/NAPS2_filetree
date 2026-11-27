@@ -1,5 +1,4 @@
 using NAPS2.ImportExport;
-using NAPS2.ImportExport.Email;
 using NAPS2.Ocr;
 using NAPS2.Search;
 
@@ -9,15 +8,13 @@ internal class SavePdfOperation : OperationBase
 {
     private readonly PdfExporter _pdfExporter;
     private readonly IOverwritePrompt _overwritePrompt;
-    private readonly IEmailProviderFactory? _emailProviderFactory;
     private readonly SearchIndexService? _searchIndexService;
 
     public SavePdfOperation(PdfExporter pdfExporter, IOverwritePrompt overwritePrompt,
-        IEmailProviderFactory? emailProviderFactory = null, SearchIndexService? searchIndexService = null)
+        SearchIndexService? searchIndexService = null)
     {
         _pdfExporter = pdfExporter;
         _overwritePrompt = overwritePrompt;
-        _emailProviderFactory = emailProviderFactory;
         _searchIndexService = searchIndexService;
 
         AllowCancel = true;
@@ -28,11 +25,10 @@ internal class SavePdfOperation : OperationBase
     public string? FirstFileSaved { get; private set; }
 
     public bool Start(string fileName, Placeholders placeholders, ICollection<ProcessedImage> images,
-        PdfSettings pdfSettings, OcrParams ocrParams, EmailMessage? emailMessage = null,
-        string? overwriteFile = null)
+        PdfSettings pdfSettings, OcrParams ocrParams, string? overwriteFile = null)
     {
         // TODO: This needs tests. And ideally simplification.
-        ProgressTitle = emailMessage != null ? MiscResources.EmailPdfProgress : MiscResources.SavePdfProgress;
+        ProgressTitle = MiscResources.SavePdfProgress;
         var subFileName = placeholders.Substitute(fileName);
         Status = new OperationStatus
         {
@@ -97,11 +93,6 @@ internal class SavePdfOperation : OperationBase
                     }
                     // Index the saved PDF for local full-text search (in the background so saving isn't slowed)
                     _searchIndexService?.IndexPdfInBackground(currentFileName);
-                    emailMessage?.Attachments.Add(new EmailAttachment
-                    {
-                        FilePath = currentFileName,
-                        AttachmentName = Path.GetFileName(currentFileName)
-                    });
                     if (i == 0)
                     {
                         FirstFileSaved = subFileName;
@@ -127,52 +118,18 @@ internal class SavePdfOperation : OperationBase
                 GC.Collect();
             }
 
-            if (result && emailMessage != null && _emailProviderFactory != null)
-            {
-                Status.StatusText = MiscResources.UploadingEmail;
-                Status.CurrentProgress = 0;
-                Status.MaxProgress = 1;
-                Status.ProgressType = OperationProgressType.MB;
-                InvokeStatusChanged();
-
-                try
-                {
-                    result = await _emailProviderFactory.Default.SendEmail(emailMessage, ProgressHandler);
-                }
-                catch (OperationCanceledException)
-                {
-                }
-                catch (Exception ex)
-                {
-                    Log.ErrorException(MiscResources.ErrorEmailing, ex);
-                    InvokeError(MiscResources.ErrorEmailing, ex);
-                }
-            }
-
             return result;
         });
         Success.ContinueWith(task =>
         {
             if (task.Result)
             {
-                if (emailMessage != null)
+                Log.Event(EventType.SavePdf, new EventParams
                 {
-                    Log.Event(EventType.Email, new EventParams
-                    {
-                        Name = MiscResources.EmailPdf,
-                        Pages = images.Count,
-                        FileFormat = ".pdf"
-                    });
-                }
-                else
-                {
-                    Log.Event(EventType.SavePdf, new EventParams
-                    {
-                        Name = MiscResources.SavePdf,
-                        Pages = images.Count,
-                        FileFormat = ".pdf"
-                    });
-                }
+                    Name = MiscResources.SavePdf,
+                    Pages = images.Count,
+                    FileFormat = ".pdf"
+                });
             }
         }, TaskContinuationOptions.OnlyOnRanToCompletion);
 

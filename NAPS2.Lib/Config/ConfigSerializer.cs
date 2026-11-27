@@ -224,8 +224,6 @@ public class ConfigSerializer : VersionedSerializer<ConfigStorage<CommonConfig>>
         storage.Set(x => x.LastImageExt, c.LastImageExt);
         storage.Set(x => x.PdfSettings, c.PdfSettings);
         storage.Set(x => x.ImageSettings, c.ImageSettings);
-        storage.Set(x => x.EmailSettings, c.EmailSettings);
-        storage.Set(x => x.EmailSetup, c.EmailSetup);
         storage.Set(x => x.ThumbnailSize, c.ThumbnailSize);
         if (c.LastBatchSettings != null)
         {

@@ -1,7 +1,6 @@
 using System.Collections.Immutable;
 using NAPS2.Config.Model;
 using NAPS2.Escl;
-using NAPS2.ImportExport.Email;
 using NAPS2.ImportExport.Images;
 using NAPS2.Pdf;
 using NAPS2.Ocr;
@@ -181,17 +180,6 @@ public class CommonConfig
 
     [User]
     public bool RememberImageSettings { get; set; }
-
-    [Config]
-    [Common]
-    public EmailSettings EmailSettings { get; set; } = new();
-
-    [User]
-    public bool RememberEmailSettings { get; set; }
-
-    [Config]
-    [Common]
-    public EmailSetup EmailSetup { get; set; } = new();
 
     [Config]
     [Common]

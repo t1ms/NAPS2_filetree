@@ -110,23 +110,6 @@ public class DesktopCommands
         {
             Text = UiStrings.ImageSettings
         };
-        EmailPdf = new ActionCommand(desktopController.EmailPdf)
-        {
-            Text = UiStrings.EmailPdf,
-            IconName = "email_attach"
-        };
-        EmailAll = new ActionCommand(imageListActions.EmailAllAsPdf)
-        {
-            Text = UiStrings.EmailAll
-        };
-        EmailSelected = new ActionCommand(imageListActions.EmailSelectedAsPdf)
-        {
-            Text = UiStrings.EmailSelected
-        };
-        EmailSettings = new ActionCommand(desktopSubFormController.ShowEmailSettingsForm)
-        {
-            Text = UiStrings.EmailSettings
-        };
         Print = new ActionCommand(desktopController.Print)
         {
             Text = UiStrings.Print,
@@ -407,10 +390,6 @@ public class DesktopCommands
     public ActionCommand SaveAllImages { get; set; }
     public ActionCommand SaveSelectedImages { get; set; }
     public ActionCommand ImageSettings { get; set; }
-    public ActionCommand EmailPdf { get; set; }
-    public ActionCommand EmailAll { get; set; }
-    public ActionCommand EmailSelected { get; set; }
-    public ActionCommand EmailSettings { get; set; }
     public ActionCommand Print { get; set; }
     public ActionCommand ImageMenu { get; set; }
     public ActionCommand ViewImage { get; set; }

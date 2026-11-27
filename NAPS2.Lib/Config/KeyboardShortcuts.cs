@@ -32,11 +32,6 @@ public class KeyboardShortcuts
     public string? SaveImagesSelected { get; set; }
     public string? ImageSettings { get; set; }
 
-    public string? EmailPDF { get; set; }
-    public string? EmailPDFAll { get; set; }
-    public string? EmailPDFSelected { get; set; }
-    public string? EmailSettings { get; set; }
-
     public string? Print { get; set; }
 
     public string? ImageView { get; set; }
