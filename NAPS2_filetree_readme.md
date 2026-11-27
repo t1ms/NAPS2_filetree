@@ -5,7 +5,7 @@ in the Windows portable application.
 
 ## Start the portable application
 
-1. Download `naps2-portable-win64.zip` from this repository.
+1. Download `naps2-portable-win64.zip` from the [Releases page](https://github.com/t1ms/NAPS2_filetree/releases).
 2. Extract the **entire** ZIP file.
 3. Open:
 
@@ -366,7 +366,7 @@ temporary worker error, the list now falls back to in-process rendering.
 If thumbnails still appear blank:
 
 1. Close NAPS2.
-2. Download the latest `naps2-portable-win64.zip`.
+2. Download the latest `naps2-portable-win64.zip` from the [Releases page](https://github.com/t1ms/NAPS2_filetree/releases).
 3. Extract it into a new folder rather than mixing files with an older build.
 4. Confirm that these files exist:
 

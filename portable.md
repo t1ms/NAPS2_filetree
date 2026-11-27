@@ -5,7 +5,7 @@ installer or administrator rights.
 
 ## What to download
 
-Download:
+Download from the [Releases page](https://github.com/t1ms/NAPS2_filetree/releases):
 
 ```text
 naps2-portable-win64.zip
